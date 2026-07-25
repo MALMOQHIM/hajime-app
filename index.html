@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Hajime</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #000000; color: #f4f4f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+
+    /* Mobile Frame */
+    .app-container { width: 100%; max-width: 430px; height: 100vh; max-height: 932px; background-color: #121215; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    @media (min-width: 450px) { .app-container { height: 880px; border-radius: 36px; border: 6px solid #27272a; } }
+
+    /* Header Bar */
+    .app-header { height: 56px; background: #18181b; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 16px; font-weight: 800; color: #f4f4f5; letter-spacing: 1px; text-transform: uppercase; }
+    .header-btn { background: #27272a; border: none; color: #a1a1aa; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    .header-btn:active { opacity: 0.7; }
+
+    /* Body Container */
+    .app-body { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Cards */
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-size: 20px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Splits Cards */
+    .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .split-card.completed { background: rgba(34, 197, 94, 0.12); border-color: #22c55e; color: #4ade80; }
+
+    /* 4-Column Sub Grid for Exercise Info */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .sub-box { background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 10px 4px; text-align: center; }
+    .sub-box-label { font-size: 11px; font-weight: 800; color: #71717a; text-transform: uppercase; }
+    .sub-box-value { font-size: 15px; font-weight: 800; color: #3b82f6; margin-top: 4px; text-transform: uppercase; }
+
+    /* Action Button */
+    .btn-primary { background: #3b82f6; color: #ffffff; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-primary:active { opacity: 0.8; }
+
+    /* Keypad Weight Display */
+    .weight-display { font-size: 38px; font-weight: 900; text-align: center; padding: 12px; background: #27272a; border-radius: 12px; margin-bottom: 6px; }
+    .weight-display.previous { color: #71717a; }
+    .weight-display.active { color: #eab308; }
+
+    .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .keypad-btn { background: #27272a; color: #f4f4f5; border: none; padding: 18px; border-radius: 12px; font-size: 22px; font-weight: 800; cursor: pointer; }
+    .keypad-btn:active { background: #3f3f46; }
+    .keypad-btn.action { background: #3f3f46; color: #3b82f6; }
+
+    /* Choice Options Grid */
+    .options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .option-card { background: #27272a; border: 2px solid transparent; padding: 18px 8px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 800; cursor: pointer; color: #f4f4f5; }
+    
+    .opt-S { background: rgba(234, 179, 8, 0.15); border: 1px solid #eab308; color: #fde047; }
+    .opt-A { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; }
+    .opt-B { background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; }
+    .opt-C { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; }
+
+    /* Modal Overlay */
+    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: none; justify-content: center; align-items: center; padding: 16px; z-index: 50; }
+    .modal-card { background: #18181b; border: 1px solid #27272a; border-radius: 18px; padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Top Navigation Header -->
+  <div class="app-header" id="appHeader">
+    <button class="header-btn" id="btnBack" onclick="goBack()" style="visibility:hidden;">BACK</button>
+    <span id="headerTitle">HAJIME</span>
+    <button class="header-btn" id="btnHome" onclick="goHome()" style="visibility:hidden;">HOME</button>
+  </div>
+
+  <!-- Dynamic Screen Content -->
+  <div class="app-body" id="appBody"></div>
+
+  <!-- Update Schedule Modal -->
+  <div class="modal-overlay" id="updateModal">
+    <div class="modal-card">
+      <div class="card-title">UPDATE SCHEDULE</div>
+      <textarea id="tsvInput" rows="9" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:12px; width:100%; resize:none;" placeholder="Paste sheet columns here..."></textarea>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary" style="background:#3f3f46;" onclick="pasteSampleData()">PASTE SAMPLE</button>
+        <button class="btn-primary" onclick="processSheetUpdate()">SAVE UPDATE</button>
+      </div>
+      <button class="header-btn" onclick="closeUpdateModal()" style="width:100%; margin-top:4px;">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Persistent State
+  let parsedSchedule = JSON.parse(localStorage.getItem('hajime_v4_data')) || [];
+  let currentSplitIdx = null;
+  let currentExerciseIdx = null;
+  let currentSetIdx = 0;
+  let currentStep = 'WEIGHT'; // WEIGHT -> REPS -> RQ -> FR -> RIR -> NOTE
+  
+  let activeWeightStr = "";
+  let activeWeightStr2 = "";
+  let activePrimePin = 1;
+
+  window.onload = function() {
+    renderHomeScreen();
+  };
+
+  function setHeader(title, showBack = true, showHome = true) {
+    document.getElementById('headerTitle').innerText = title.toUpperCase();
+    document.getElementById('btnBack').style.visibility = showBack ? 'visible' : 'hidden';
+    document.getElementById('btnHome').style.visibility = showHome ? 'visible' : 'hidden';
+  }
+
+  function goHome() {
+    currentSplitIdx = null;
+    currentExerciseIdx = null;
+    activeWeightStr = "";
+    activeWeightStr2 = "";
+    renderHomeScreen();
+  }
+
+  function goBack() {
+    if (currentStep === 'NOTE') {
+      currentStep = 'RIR';
+      renderStep();
+    } else if (currentStep === 'RIR') {
+      currentStep = 'FR';
+      renderStep();
+    } else if (currentStep === 'FR') {
+      currentStep = 'RQ';
+      renderStep();
+    } else if (currentStep === 'RQ') {
+      currentStep = 'REPS';
+      renderStep();
+    } else if (currentStep === 'REPS') {
+      currentStep = 'WEIGHT';
+      renderStep();
+    } else if (currentStep === 'WEIGHT') {
+      if (currentSetIdx > 0) {
+        currentSetIdx--;
+        currentStep = 'RIR';
+        activeWeightStr = "";
+        activeWeightStr2 = "";
+        renderStep();
+      } else {
+        currentExerciseIdx = null;
+        activeWeightStr = "";
+        activeWeightStr2 = "";
+        renderExerciseList();
+      }
+    } else if (currentExerciseIdx !== null) {
+      currentExerciseIdx = null;
+      renderExerciseList();
+    } else if (currentSplitIdx !== null) {
+      currentSplitIdx = null;
+      renderDaySelect();
+    } else {
+      renderHomeScreen();
+    }
+  }
+
+  /* ---------------- SCREEN 1: HOME ---------------- */
+  function renderHomeScreen() {
+    setHeader("HAJIME", false, false);
+    const body = document.getElementById('appBody');
+    const totalSplits = parsedSchedule.length;
+
+    body.innerHTML = `
+      <div class="card" style="text-align:center; padding:28px 16px;">
+        <div class="card-title" style="font-size:26px; color:#3b82f6;">HAJIME</div>
+      </div>
+
+      <button class="btn-primary" style="padding:20px; font-size:18px;" onclick="${totalSplits > 0 ? 'renderDaySelect()' : 'openUpdateModal()'}">
+        ${totalSplits > 0 ? 'START WORKOUT' : 'UPDATE SCHEDULE TO BEGIN'}
+      </button>
+
+      <div class="card" style="margin-top:10px;">
+        <div class="card-title" style="font-size:15px;">UPDATE SCHEDULE</div>
+        <button class="btn-primary" style="background:#27272a; border:1px solid #3f3f46; margin-top:4px;" onclick="openUpdateModal()">UPDATE</button>
+      </div>
+    `;
+  }
+
+  /* ---------------- SCREEN 2: DAY / SPLITS SELECT ---------------- */
+  function renderDaySelect() {
+    setHeader("WORKOUT SPLITS", true, true);
+    const body = document.getElementById('appBody');
+
+    if (parsedSchedule.length === 0) {
+      renderHomeScreen();
+      return;
+    }
+
+    let daysHtml = parsedSchedule.map((splitObj, idx) => {
+      let exList = splitObj.exercises || [];
+      let completedCount = exList.filter(e => e.isComplete).length;
+      let isDone = completedCount === exList.length && exList.length > 0;
+
+      return `
+        <div class="split-card ${isDone ? 'completed' : ''}" onclick="selectSplit(${idx})">
+          <div style="font-weight:800; font-size:17px; text-transform:uppercase;">${splitObj.title}</div>
+          <div style="font-weight:800; font-size:16px;">${completedCount} / ${exList.length} ${isDone ? '✓' : ''}</div>
+        </div>
+      `;
+    }).join('');
+
+    body.innerHTML = daysHtml;
+  }
+
+  function selectSplit(idx) {
+    currentSplitIdx = idx;
+    currentExerciseIdx = null;
+    renderExerciseList();
+  }
+
+  /* ---------------- SCREEN 3: EXERCISE LIST ---------------- */
+  function renderExerciseList() {
+    currentExerciseIdx = null;
+    const splitObj = parsedSchedule[currentSplitIdx];
+    setHeader(`${splitObj.title}`, true, true);
+    const body = document.getElementById('appBody');
+
+    const exercises = splitObj.exercises || [];
+
+    let exListHtml = exercises.map((ex, idx) => {
+      return `
+        <div class="split-card ${ex.isComplete ? 'completed' : ''}" onclick="startExercise(${idx})">
+          <div style="font-weight:800; font-size:16px; text-transform:uppercase;">${idx + 1}. ${ex.name}</div>
+          <div style="font-weight:800; font-size:18px;">${ex.isComplete ? '✓' : ''}</div>
+        </div>
+      `;
+    }).join('');
+
+    body.innerHTML = `
+      ${exListHtml}
+      <button class="btn-primary" id="btnExport" style="margin-top:10px;" onclick="exportWorkoutSheet()">EXPORT</button>
+    `;
+  }
+
+  function startExercise(idx) {
+    currentExerciseIdx = idx;
+    currentSetIdx = 0;
+    currentStep = 'WEIGHT';
+    activeWeightStr = "";
+    activeWeightStr2 = "";
+    activePrimePin = 1;
+    renderStep();
+  }
+
+  /* ---------------- SMART PREVIOUS WEIGHT SEARCH ---------------- */
+  function getSmartPreviousWeight(exName, setIdx) {
+    const splitObj = parsedSchedule[currentSplitIdx];
+    const currentEx = splitObj.exercises[currentExerciseIdx];
+
+    // SET 2+: Use previous set's weight from CURRENT session
+    if (setIdx > 0) {
+      if (currentEx.sets && currentEx.sets[setIdx - 1] && currentEx.sets[setIdx - 1].kg && currentEx.sets[setIdx - 1].kg !== "-") {
+        return currentEx.sets[setIdx - 1].kg;
+      }
+      if (currentEx.sets && currentEx.sets[0] && currentEx.sets[0].kg && currentEx.sets[0].kg !== "-") {
+        return currentEx.sets[0].kg;
+      }
+    }
+
+    // SET 1: Search exact exercise name match across previous week/imported schedule
+    if (currentEx.prevSets && currentEx.prevSets[0] && currentEx.prevSets[0].kg && currentEx.prevSets[0].kg !== "-") {
+      return currentEx.prevSets[0].kg;
+    }
+
+    const targetName = exName.trim().toLowerCase();
+    for (let i = parsedSchedule.length - 1; i >= 0; i--) {
+      const split = parsedSchedule[i];
+      for (let j = split.exercises.length - 1; j >= 0; j--) {
+        const e = split.exercises[j];
+        if (e.name.trim().toLowerCase() === targetName) {
+          if (e.sets && e.sets[0] && e.sets[0].kg && e.sets[0].kg !== "-") {
+            return e.sets[0].kg;
+          }
+          if (e.prevSets && e.prevSets[0] && e.prevSets[0].kg && e.prevSets[0].kg !== "-") {
+            return e.prevSets[0].kg;
+          }
+        }
+      }
+    }
+
+    return "0";
+  }
+
+  /* ---------------- SCREEN 4: STEP LOGGING ---------------- */
+  function renderStep() {
+    const splitObj = parsedSchedule[currentSplitIdx];
+    const ex = splitObj.exercises[currentExerciseIdx];
+    setHeader(`${splitObj.title}`, true, true);
+    const body = document.getElementById('appBody');
+
+    const totalSets = ex.setsCount || 3;
+    const isPrime = ex.isPrime || ex.name.toLowerCase().includes('prime');
+
+    // Get previous or recorded weight value
+    let prevWeight = getSmartPreviousWeight(ex.name, currentSetIdx);
+
+    let repRange = ex.sxr;
+    if (ex.sxr && ex.sxr.includes('x')) {
+      repRange = ex.sxr.split('x')[1].trim();
+    }
+
+    let headerHtml = `
+      <div class="card" style="text-align:center; padding:18px 12px;">
+        <div class="card-title">${ex.name}</div>
+      </div>
+
+      <div class="grid-4">
+        <div class="sub-box">
+          <div class="sub-box-label">SET</div>
+          <div class="sub-box-value">${currentSetIdx + 1} OF ${totalSets}</div>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-label">REPS</div>
+          <div class="sub-box-value">${repRange}</div>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-label">RIR</div>
+          <div class="sub-box-value">${ex.targetRir}</div>
+        </div>
+        <div class="sub-box">
+          <div class="sub-box-label">SEAT</div>
+          <div class="sub-box-value">${ex.seat || '-'}</div>
+        </div>
+      </div>
+    `;
+
+    if (currentStep === 'WEIGHT') {
+      let isTyped1 = activeWeightStr !== "";
+      let displayVal1 = isTyped1 ? activeWeightStr : prevWeight;
+
+      let isTyped2 = activeWeightStr2 !== "";
+      let displayVal2 = isTyped2 ? activeWeightStr2 : prevWeight;
+
+      body.innerHTML = `
+        ${headerHtml}
+        <div class="card">
+          <div class="card-title" style="font-size:16px; text-align:center;">WEIGHT (KG)</div>
+          ${isPrime ? `
+            <div style="display:flex; gap:8px;">
+              <div class="weight-display ${isTyped1 ? 'active' : 'previous'}" style="flex:1;" onclick="activePrimePin=1; renderStep();">
+                ${displayVal1}
+              </div>
+              <div class="weight-display ${isTyped2 ? 'active' : 'previous'}" style="flex:1;" onclick="activePrimePin=2; renderStep();">
+                ${displayVal2}
+              </div>
+            </div>
+          ` : `
+            <div class="weight-display ${isTyped1 ? 'active' : 'previous'}">
+              ${displayVal1} <span style="font-size:16px; opacity:0.6;">KG</span>
+            </div>
+          `}
+
+          <div class="keypad-grid">
+            <button class="keypad-btn" onclick="pressKey('1')">1</button>
+            <button class="keypad-btn" onclick="pressKey('2')">2</button>
+            <button class="keypad-btn" onclick="pressKey('3')">3</button>
+            <button class="keypad-btn" onclick="pressKey('4')">4</button>
+            <button class="keypad-btn" onclick="pressKey('5')">5</button>
+            <button class="keypad-btn" onclick="pressKey('6')">6</button>
+            <button class="keypad-btn" onclick="pressKey('7')">7</button>
+            <button class="keypad-btn" onclick="pressKey('8')">8</button>
+            <button class="keypad-btn" onclick="pressKey('9')">9</button>
+            <button class="keypad-btn action" onclick="pressKey('.')">.</button>
+            <button class="keypad-btn" onclick="pressKey('0')">0</button>
+            <button class="keypad-btn action" onclick="pressKey('⌫')">⌫</button>
+          </div>
+          <button class="btn-primary" style="margin-top:8px;" onclick="saveWeightNext('${prevWeight}')">NEXT</button>
+        </div>
+      `;
+    }
+    else if (currentStep === 'REPS') {
+      let repOptions = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(r => `
+        <div class="option-card" onclick="saveRepsNext(${r})">${r}</div>
+      `).join('');
+
+      body.innerHTML = `
+        ${headerHtml}
+        <div class="card">
+          <div class="card-title" style="font-size:16px; text-align:center;">REPS</div>
+          <div class="options-grid">${repOptions}</div>
+        </div>
+      `;
+    }
+    else if (currentStep === 'RQ') {
+      body.innerHTML = `
+        ${headerHtml}
+        <div class="card">
+          <div class="card-title" style="font-size:16px; text-align:center;">RQ</div>
+          <div class="options-grid">
+            <div class="option-card opt-S" onclick="saveRqNext('S')">S</div>
+            <div class="option-card opt-A" onclick="saveRqNext('A')">A</div>
+            <div class="option-card opt-B" onclick="saveRqNext('B')">B</div>
+            <div class="option-card opt-C" onclick="saveRqNext('C')">C</div>
+          </div>
+        </div>
+      `;
+    }
+    else if (currentStep === 'FR') {
+      body.innerHTML = `
+        ${headerHtml}
+        <div class="card">
+          <div class="card-title" style="font-size:16px; text-align:center;">FR</div>
+          <div class="options-grid">
+            <div class="option-card opt-S" onclick="saveFrNext('S')">S</div>
+            <div class="option-card opt-A" onclick="saveFrNext('A')">A</div>
+            <div class="option-card opt-B" onclick="saveFrNext('B')">B</div>
+            <div class="option-card opt-C" onclick="saveFrNext('C')">C</div>
+          </div>
+        </div>
+      `;
+    }
+    else if (currentStep === 'RIR') {
+      let rirOptions = [0, 1, 2, 3, 4, 5].map(r => `
+        <div class="option-card" onclick="saveRirNext(${r})">${r}</div>
+      `).join('');
+
+      body.innerHTML = `
+        ${headerHtml}
+        <div class="card">
+          <div class="card-title" style="font-size:16px; text-align:center;">RIR</div>
+          <div class="options-grid" style="grid-template-columns:repeat(3, 1fr);">${rirOptions}</div>
+        </div>
+      `;
+    }
+    else if (currentStep === 'NOTE') {
+      let existingNote = ex.note || "";
+      body.innerHTML = `
+        <div class="card">
+          <div class="card-title">NOTES</div>
+          <textarea id="noteInput" rows="5" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:15px; width:100%; resize:none;">${existingNote}</textarea>
+          <button class="btn-primary" style="background:#22c55e; color:#000; margin-top:8px;" onclick="saveNoteFinish()">DONE</button>
+        </div>
+      `;
+    }
+  }
+
+  function pressKey(key) {
+    let isPin2 = (activePrimePin === 2);
+    let targetStr = isPin2 ? activeWeightStr2 : activeWeightStr;
+
+    if (key === '⌫') {
+      targetStr = targetStr.slice(0, -1);
+    } else if (key === '.') {
+      if (!targetStr.includes('.')) targetStr += '.';
+    } else {
+      targetStr += key;
+    }
+
+    if (isPin2) activeWeightStr2 = targetStr;
+    else activeWeightStr = targetStr;
+
+    renderStep();
+  }
+
+  function saveWeightNext(prevWeight) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    const isPrime = ex.isPrime || ex.name.toLowerCase().includes('prime');
+    
+    let isTyped1 = activeWeightStr !== "";
+    let isTyped2 = activeWeightStr2 !== "";
+
+    let val = isTyped1 ? activeWeightStr : prevWeight;
+    if (isPrime && (isTyped1 || isTyped2)) {
+      let w1 = isTyped1 ? activeWeightStr : prevWeight;
+      let w2 = isTyped2 ? activeWeightStr2 : prevWeight;
+      val = `${w1}-${w2}`;
+    }
+
+    ensureSetObject();
+    ex.sets[currentSetIdx].kg = val;
+    currentStep = 'REPS';
+    renderStep();
+  }
+
+  function saveRepsNext(repsVal) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ensureSetObject();
+    ex.sets[currentSetIdx].reps = repsVal;
+    currentStep = 'RQ';
+    renderStep();
+  }
+
+  function saveRqNext(rqVal) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ensureSetObject();
+    ex.sets[currentSetIdx].rq = rqVal;
+    currentStep = 'FR';
+    renderStep();
+  }
+
+  function saveFrNext(frVal) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ensureSetObject();
+    ex.sets[currentSetIdx].fr = frVal;
+    currentStep = 'RIR';
+    renderStep();
+  }
+
+  function saveRirNext(rirVal) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ensureSetObject();
+    ex.sets[currentSetIdx].rir = rirVal;
+
+    const totalSets = ex.setsCount || 3;
+    if (currentSetIdx + 1 < totalSets) {
+      currentSetIdx++;
+      currentStep = 'WEIGHT';
+      activeWeightStr = "";
+      activeWeightStr2 = "";
+    } else {
+      currentStep = 'NOTE';
+    }
+    saveState();
+    renderStep();
+  }
+
+  function saveNoteFinish() {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ex.note = document.getElementById('noteInput').value;
+    ex.isComplete = true;
+    saveState();
+    renderExerciseList();
+  }
+
+  function ensureSetObject() {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    if (!ex.sets) ex.sets = [];
+    if (!ex.sets[currentSetIdx]) ex.sets[currentSetIdx] = {};
+  }
+
+  function saveState() {
+    localStorage.setItem('hajime_v4_data', JSON.stringify(parsedSchedule));
+  }
+
+  /* ---------------- EXPORT TSV ---------------- */
+  function exportWorkoutSheet() {
+    const exercises = parsedSchedule[currentSplitIdx].exercises || [];
+    let exportRows = [];
+
+    exercises.forEach(ex => {
+      let rowCells = [];
+      for (let s = 0; s < 3; s++) {
+        if (ex.sets && ex.sets[s]) {
+          rowCells.push(ex.sets[s].kg || "-");
+          rowCells.push(ex.sets[s].reps || "-");
+          rowCells.push(ex.sets[s].rq || "-");
+          rowCells.push(ex.sets[s].fr || "-");
+          rowCells.push(ex.sets[s].rir || "-");
+        } else {
+          rowCells.push("-", "-", "-", "-", "-");
+        }
+      }
+      rowCells.push(ex.note || "");
+      exportRows.push(rowCells.join('\t'));
+    });
+
+    let finalTsvText = exportRows.join('\n');
+
+    navigator.clipboard.writeText(finalTsvText).then(() => {
+      triggerExportSuccess();
+    }).catch(() => {
+      triggerExportSuccess();
+    });
+  }
+
+  function triggerExportSuccess() {
+    const btn = document.getElementById('btnExport');
+    if (btn) {
+      btn.style.background = "#22c55e";
+      btn.style.color = "#000000";
+      btn.innerText = "DONE ✓";
+      setTimeout(() => {
+        btn.style.background = "#3b82f6";
+        btn.style.color = "#ffffff";
+        btn.innerText = "EXPORT";
+      }, 2000);
+    }
+  }
+
+  /* ---------------- UPDATE MODAL & TSV PARSER ---------------- */
+  function openUpdateModal() {
+    document.getElementById('updateModal').style.display = 'flex';
+  }
+
+  function closeUpdateModal() {
+    document.getElementById('updateModal').style.display = 'none';
+  }
+
+  function pasteSampleData() {
+    const sampleTSV = `Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
+\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
+7/24\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t85\t7\tA\tB\t1\t75\t8\tA\tA\t1\t75\t9\tA\tA\t1\tاول جلستين كانت مسكه غير حقتي ومب مريحه
+\t\t2\tUnilateral cable row\t\t2 x 8-10\t3\t36\t7\tA\tA\t1\t36\t8\tA\tA\t1\t\t\t\t\t\tيدي اليمين اقوى بواجد باللاتس السفلية
+\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t8\tA\tA\t1\t70\t11\tA\tA\t1\t\t\t\t\t\t
+\t\t4\tRope Triceps Pushdown\t\t3 x 10-12\t2\t25\t8\tA\tA\t1\t20\t9\tA\tA\t1\t20\t11\tA\tA\t0\t
+\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t11.5\t9\tA\tB\t0\t11.5\t11\tA\tA\t1\t\t\t\t\t\tملاحظة المدرب اعتماد التكنيك الثاني بارتفاع 48
+Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
+\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
+7/25\t"DAY\\n5"\t1\tRomanian Deadlift (Barbell)\t\t3 x 6-8\t4\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
+\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
+\t\t3\tMachine Fly\t2\t3 x 10-12\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
+\t\t4\tLengthened Range Cable Lateral Raises\t16\t3 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tملاحظة المدرب اني اثبت جسمي`;
+    document.getElementById('tsvInput').value = sampleTSV;
+  }
+
+  function processSheetUpdate() {
+    const text = document.getElementById('tsvInput').value;
+    if (!text || !text.trim()) {
+      alert("Please paste TSV data first.");
+      return;
+    }
+
+    let cleanedText = text.replace(/"([^"]*)"/g, (match, p1) => {
+      return '"' + p1.replace(/\r?\n/g, ' ').replace(/\t/g, ' ') + '"';
+    });
+
+    const lines = cleanedText.split(/\r?\n/);
+    let splitsArray = [];
+    let currentSplitObj = null;
+
+    lines.forEach(line => {
+      const parts = line.split('\t');
+      if (parts.length < 4) return;
+
+      let rawDate = parts[0] ? parts[0].replace(/"/g, '').trim() : "";
+      let rawWorkout = parts[1] ? parts[1].replace(/"/g, '').replace(/\\n/g, ' ').trim() : "";
+
+      if (parts[3] && parts[3].toLowerCase().includes("exercise")) return;
+
+      if (rawWorkout.toUpperCase().includes("DAY") || (rawDate && rawDate.toLowerCase() !== "date" && rawDate !== "")) {
+        if (rawWorkout.toUpperCase().includes("DAY")) {
+          let splitTitle = rawWorkout.toUpperCase();
+          if (rawDate && rawDate.toLowerCase() !== "date" && rawDate !== "") {
+            splitTitle += ` (${rawDate})`;
+          }
+
+          currentSplitObj = {
+            title: splitTitle,
+            exercises: []
+          };
+          splitsArray.push(currentSplitObj);
+        }
+      }
+
+      let exName = parts[3] ? parts[3].replace(/"/g, '').trim() : "";
+      if (!exName || exName.toLowerCase() === "exercise" || exName === "N") return;
+
+      if (!currentSplitObj) {
+        currentSplitObj = {
+          title: rawWorkout ? rawWorkout.toUpperCase() : "DAY 1",
+          exercises: []
+        };
+        splitsArray.push(currentSplitObj);
+      }
+
+      let seat = parts[4] ? parts[4].replace(/"/g, '').trim() : "-";
+      let sxr = parts[5] ? parts[5].replace(/"/g, '').trim() : "3 x 8-10";
+      let targetRir = parts[6] ? parts[6].replace(/"/g, '').trim() : "2";
+
+      let setsCount = 3;
+      if (sxr.includes('x')) {
+        let sc = parseInt(sxr.split('x')[0]);
+        if (!isNaN(sc)) setsCount = sc;
+      }
+
+      let prevSets = [];
+      let filledSetsCount = 0;
+
+      for (let s = 0; s < setsCount; s++) {
+        let baseIdx = 7 + (s * 5);
+        let kg = parts[baseIdx] ? parts[baseIdx].trim() : "";
+        let reps = parts[baseIdx + 1] ? parts[baseIdx + 1].trim() : "";
+        let rq = parts[baseIdx + 2] ? parts[baseIdx + 2].trim() : "";
+        let fr = parts[baseIdx + 3] ? parts[baseIdx + 3].trim() : "";
+        let rir = parts[baseIdx + 4] ? parts[baseIdx + 4].trim() : "";
+
+        if (kg && kg !== "-") {
+          filledSetsCount++;
+        }
+        prevSets.push({ kg, reps, rq, fr, rir });
+      }
+
+      let note = parts[22] ? parts[22].replace(/"/g, '').trim() : "";
+      let isComplete = (filledSetsCount >= setsCount && setsCount > 0);
+
+      currentSplitObj.exercises.push({
+        name: exName,
+        seat: seat || "-",
+        sxr: sxr || "3 x 8-10",
+        targetRir: targetRir || "2",
+        setsCount: setsCount,
+        prevSets: prevSets,
+        sets: isComplete ? JSON.parse(JSON.stringify(prevSets)) : [],
+        note: note,
+        isComplete: isComplete,
+        isPrime: exName.toLowerCase().includes('prime')
+      });
+    });
+
+    parsedSchedule = splitsArray;
+    saveState();
+    closeUpdateModal();
+    renderHomeScreen();
+  }
+</script>
+</body>
+</html>
