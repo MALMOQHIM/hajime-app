@@ -1,102 +1,126 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-  <!-- PWA Settings for Mobile -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Hajime">
-<link rel="apple-touch-icon" href="https://via.placeholder.com/180/18181b/3b82f6?text=H">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Hajime</title>
+
+  <!-- PWA Settings for Mobile -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Hajime">
+  <link rel="apple-touch-icon" href="https://via.placeholder.com/180/18181b/3b82f6?text=H">
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: #000000; color: #f4f4f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
 
-    /* Mobile Frame */
+    /* Mobile Container Frame */
     .app-container { width: 100%; max-width: 430px; height: 100vh; max-height: 932px; background-color: #121215; display: flex; flex-direction: column; position: relative; overflow: hidden; }
     @media (min-width: 450px) { .app-container { height: 880px; border-radius: 36px; border: 6px solid #27272a; } }
 
-    /* Header Bar */
-    .app-header { height: 56px; background: #18181b; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 16px; font-weight: 800; color: #f4f4f5; letter-spacing: 1px; text-transform: uppercase; }
-    .header-btn { background: #27272a; border: none; color: #a1a1aa; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    /* Header Bar Navigation */
+    .app-header { height: 56px; background: #18181b; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px; font-weight: 800; color: #f4f4f5; letter-spacing: 0.5px; text-transform: uppercase; }
+    .header-nav-group { display: flex; align-items: center; gap: 4px; }
+    .header-btn { background: #27272a; border: none; color: #a1a1aa; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
     .header-btn:active { opacity: 0.7; }
+    .nav-arrow-btn { background: #27272a; border: none; color: #3b82f6; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 900; cursor: pointer; }
+    .nav-arrow-btn:active { background: #3b82f6; color: #fff; }
 
     /* Body Container */
-    .app-body { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .app-body { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 
-    /* Cards */
-    .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-    .card-title { font-size: 20px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Cards Layout */
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* Splits Cards */
-    .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    /* Coach Note Box */
+    .coach-note-box { background: rgba(59, 130, 246, 0.08); border: 1px dashed #3b82f6; border-radius: 12px; padding: 12px; color: #93c5fd; font-size: 13px; font-weight: 600; line-height: 1.4; }
+
+    /* Split Cards & Exercise Badges */
+    .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
     .split-card.completed { background: rgba(34, 197, 94, 0.12); border-color: #22c55e; color: #4ade80; }
+    .split-card.partial { background: rgba(113, 113, 122, 0.15); border-color: #71717a; color: #a1a1aa; }
 
     /* 4-Column Sub Grid for Exercise Info */
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .sub-box { background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 10px 4px; text-align: center; }
-    .sub-box-label { font-size: 11px; font-weight: 800; color: #71717a; text-transform: uppercase; }
-    .sub-box-value { font-size: 15px; font-weight: 800; color: #3b82f6; margin-top: 4px; text-transform: uppercase; }
+    .sub-box-label { font-size: 10px; font-weight: 800; color: #71717a; text-transform: uppercase; }
+    .sub-box-value { font-size: 14px; font-weight: 800; color: #3b82f6; margin-top: 4px; text-transform: uppercase; }
 
-    /* Action Button */
-    .btn-primary { background: #3b82f6; color: #ffffff; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Action Buttons */
+    .btn-primary { background: #3b82f6; color: #ffffff; border: none; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
     .btn-primary:active { opacity: 0.8; }
 
     /* Keypad Weight Display */
-    .weight-display { font-size: 38px; font-weight: 900; text-align: center; padding: 12px; background: #27272a; border-radius: 12px; margin-bottom: 6px; }
+    .weight-display { font-size: 36px; font-weight: 900; text-align: center; padding: 10px; background: #27272a; border-radius: 12px; margin-bottom: 6px; }
     .weight-display.previous { color: #71717a; }
     .weight-display.active { color: #eab308; }
 
     .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .keypad-btn { background: #27272a; color: #f4f4f5; border: none; padding: 18px; border-radius: 12px; font-size: 22px; font-weight: 800; cursor: pointer; }
+    .keypad-btn { background: #27272a; color: #f4f4f5; border: none; padding: 16px; border-radius: 12px; font-size: 22px; font-weight: 800; cursor: pointer; }
     .keypad-btn:active { background: #3f3f46; }
     .keypad-btn.action { background: #3f3f46; color: #3b82f6; }
 
-    /* Choice Options Grid */
+    /* Options Selection Grid */
     .options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .option-card { background: #27272a; border: 2px solid transparent; padding: 18px 8px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 800; cursor: pointer; color: #f4f4f5; }
+    .option-card { background: #27272a; border: 2px solid transparent; padding: 18px 8px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 800; cursor: pointer; color: #f4f4f5; transition: transform 0.1s; }
     
     .opt-S { background: rgba(234, 179, 8, 0.15); border: 1px solid #eab308; color: #fde047; }
     .opt-A { background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; }
     .opt-B { background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; }
     .opt-C { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; }
 
+    /* Feedback Touch Animation */
+    .option-card.selected-anim { transform: scale(0.92); border-color: #ffffff !important; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+
     /* Modal Overlay */
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: none; justify-content: center; align-items: center; padding: 16px; z-index: 50; }
-    .modal-card { background: #18181b; border: 1px solid #27272a; border-radius: 18px; padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 12px; }
+    .modal-card { background: #18181b; border: 1px solid #27272a; border-radius: 18px; padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 10px; }
   </style>
 </head>
 <body>
-
 <div class="app-container">
   <!-- Top Navigation Header -->
   <div class="app-header" id="appHeader">
-    <button class="header-btn" id="btnBack" onclick="goBack()" style="visibility:hidden;">BACK</button>
+    <div class="header-nav-group">
+      <button class="header-btn" id="btnBack" onclick="goBack()" style="visibility:hidden;">BACK</button>
+      <button class="nav-arrow-btn" id="btnPrevStep" onclick="goPrevStep()" style="visibility:hidden;">‹</button>
+      <button class="nav-arrow-btn" id="btnNextStep" onclick="goNextStep()" style="visibility:hidden;">›</button>
+    </div>
     <span id="headerTitle">HAJIME</span>
-    <button class="header-btn" id="btnHome" onclick="goHome()" style="visibility:hidden;">HOME</button>
+    <div class="header-nav-group">
+      <button class="header-btn" id="btnList" onclick="goList()" style="visibility:hidden;">LIST</button>
+      <button class="header-btn" id="btnHome" onclick="goHome()" style="visibility:hidden;">HOME</button>
+    </div>
   </div>
 
   <!-- Dynamic Screen Content -->
   <div class="app-body" id="appBody"></div>
 
-  <!-- Update Schedule Modal -->
+  <!-- Update Schedule & Apps Script Settings Modal -->
   <div class="modal-overlay" id="updateModal">
     <div class="modal-card">
       <div class="card-title">UPDATE SCHEDULE</div>
-      <textarea id="tsvInput" rows="9" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:12px; width:100%; resize:none;" placeholder="Paste sheet columns here..."></textarea>
-      <div style="display:flex; gap:8px;">
+      <div style="font-size:11px; color:#71717a; margin-bottom:2px;">Google Apps Script Web App URL (Optional for Cloud Sync):</div>
+      <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:11px; width:100%;">
+      
+      <div style="font-size:11px; color:#71717a; margin-top:4px;">Paste TSV Text from Google Sheets:</div>
+      <textarea id="tsvInput" rows="7" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:10px; font-size:11px; width:100%; resize:none;" placeholder="Paste sheet columns here..."></textarea>
+      
+      <div style="display:flex; gap:8px; margin-top:4px;">
         <button class="btn-primary" style="background:#3f3f46;" onclick="pasteSampleData()">PASTE SAMPLE</button>
         <button class="btn-primary" onclick="processSheetUpdate()">SAVE UPDATE</button>
       </div>
-      <button class="header-btn" onclick="closeUpdateModal()" style="width:100%; margin-top:4px;">CANCEL</button>
+      <button class="header-btn" onclick="closeUpdateModal()" style="width:100%; margin-top:2px;">CANCEL</button>
     </div>
   </div>
 </div>
 
 <script>
   // Persistent State
-  let parsedSchedule = JSON.parse(localStorage.getItem('hajime_v4_data')) || [];
+  let parsedSchedule = JSON.parse(localStorage.getItem('hajime_v5_data')) || [];
+  let appsScriptUrl = localStorage.getItem('hajime_script_url') || "";
   let currentSplitIdx = null;
   let currentExerciseIdx = null;
   let currentSetIdx = 0;
@@ -110,10 +134,13 @@
     renderHomeScreen();
   };
 
-  function setHeader(title, showBack = true, showHome = true) {
+  function setHeader(title, showBack = true, showHome = true, showArrows = false, showList = false) {
     document.getElementById('headerTitle').innerText = title.toUpperCase();
     document.getElementById('btnBack').style.visibility = showBack ? 'visible' : 'hidden';
     document.getElementById('btnHome').style.visibility = showHome ? 'visible' : 'hidden';
+    document.getElementById('btnPrevStep').style.visibility = showArrows ? 'visible' : 'hidden';
+    document.getElementById('btnNextStep').style.visibility = showArrows ? 'visible' : 'hidden';
+    document.getElementById('btnList').style.visibility = showList ? 'visible' : 'hidden';
   }
 
   function goHome() {
@@ -124,35 +151,57 @@
     renderHomeScreen();
   }
 
-  function goBack() {
-    if (currentStep === 'NOTE') {
+  function goList() {
+    if (currentSplitIdx !== null) {
+      currentExerciseIdx = null;
+      activeWeightStr = "";
+      activeWeightStr2 = "";
+      renderExerciseList();
+    }
+  }
+
+  function goPrevStep() {
+    if (currentStep === 'NOTE') currentStep = 'RIR';
+    else if (currentStep === 'RIR') currentStep = 'FR';
+    else if (currentStep === 'FR') currentStep = 'RQ';
+    else if (currentStep === 'RQ') currentStep = 'REPS';
+    else if (currentStep === 'REPS') currentStep = 'WEIGHT';
+    else if (currentStep === 'WEIGHT' && currentSetIdx > 0) {
+      currentSetIdx--;
       currentStep = 'RIR';
-      renderStep();
-    } else if (currentStep === 'RIR') {
-      currentStep = 'FR';
-      renderStep();
-    } else if (currentStep === 'FR') {
-      currentStep = 'RQ';
-      renderStep();
-    } else if (currentStep === 'RQ') {
-      currentStep = 'REPS';
-      renderStep();
-    } else if (currentStep === 'REPS') {
-      currentStep = 'WEIGHT';
-      renderStep();
-    } else if (currentStep === 'WEIGHT') {
-      if (currentSetIdx > 0) {
-        currentSetIdx--;
-        currentStep = 'RIR';
-        activeWeightStr = "";
-        activeWeightStr2 = "";
-        renderStep();
+      activeWeightStr = ""; activeWeightStr2 = "";
+    } else {
+      goList();
+      return;
+    }
+    renderStep();
+  }
+
+  function goNextStep() {
+    if (currentStep === 'WEIGHT') currentStep = 'REPS';
+    else if (currentStep === 'REPS') currentStep = 'RQ';
+    else if (currentStep === 'RQ') currentStep = 'FR';
+    else if (currentStep === 'FR') currentStep = 'RIR';
+    else if (currentStep === 'RIR') {
+      const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+      const totalSets = ex.setsCount || 3;
+      if (currentSetIdx + 1 < totalSets) {
+        currentSetIdx++;
+        currentStep = 'WEIGHT';
+        activeWeightStr = ""; activeWeightStr2 = "";
       } else {
-        currentExerciseIdx = null;
-        activeWeightStr = "";
-        activeWeightStr2 = "";
-        renderExerciseList();
+        currentStep = 'NOTE';
       }
+    } else if (currentStep === 'NOTE') {
+      saveNoteFinish();
+      return;
+    }
+    renderStep();
+  }
+
+  function goBack() {
+    if (currentStep !== 'WEIGHT' || currentSetIdx > 0) {
+      goPrevStep();
     } else if (currentExerciseIdx !== null) {
       currentExerciseIdx = null;
       renderExerciseList();
@@ -166,7 +215,7 @@
 
   /* ---------------- SCREEN 1: HOME ---------------- */
   function renderHomeScreen() {
-    setHeader("HAJIME", false, false);
+    setHeader("HAJIME", false, false, false, false);
     const body = document.getElementById('appBody');
     const totalSplits = parsedSchedule.length;
 
@@ -186,9 +235,9 @@
     `;
   }
 
-  /* ---------------- SCREEN 2: DAY / SPLITS SELECT ---------------- */
+  /* ---------------- SCREEN 2: SPLITS SELECT ---------------- */
   function renderDaySelect() {
-    setHeader("WORKOUT SPLITS", true, true);
+    setHeader("WORKOUT SPLITS", true, true, false, false);
     const body = document.getElementById('appBody');
 
     if (parsedSchedule.length === 0) {
@@ -222,16 +271,23 @@
   function renderExerciseList() {
     currentExerciseIdx = null;
     const splitObj = parsedSchedule[currentSplitIdx];
-    setHeader(`${splitObj.title}`, true, true);
+    setHeader(`${splitObj.title}`, true, true, false, false);
     const body = document.getElementById('appBody');
 
     const exercises = splitObj.exercises || [];
 
     let exListHtml = exercises.map((ex, idx) => {
+      let loggedSetsCount = (ex.sets) ? ex.sets.filter(s => s && s.kg && s.kg !== "-").length : 0;
+      let isDone = ex.isComplete || (loggedSetsCount >= (ex.setsCount || 3));
+      let isPartial = !isDone && loggedSetsCount > 0;
+
+      let cardClass = isDone ? 'completed' : (isPartial ? 'partial' : '');
+      let badgeText = isDone ? '✓' : (isPartial ? `${loggedSetsCount}/${ex.setsCount}` : '');
+
       return `
-        <div class="split-card ${ex.isComplete ? 'completed' : ''}" onclick="startExercise(${idx})">
-          <div style="font-weight:800; font-size:16px; text-transform:uppercase;">${idx + 1}. ${ex.name}</div>
-          <div style="font-weight:800; font-size:18px;">${ex.isComplete ? '✓' : ''}</div>
+        <div class="split-card ${cardClass}" onclick="startExercise(${idx})">
+          <div style="font-weight:800; font-size:15px; text-transform:uppercase;">${idx + 1}. ${ex.name}</div>
+          <div style="font-weight:800; font-size:16px;">${badgeText}</div>
         </div>
       `;
     }).join('');
@@ -252,40 +308,53 @@
     renderStep();
   }
 
-  /* ---------------- SMART PREVIOUS WEIGHT SEARCH ---------------- */
-  function getSmartPreviousWeight(exName, setIdx) {
+  /* ---------------- SMART HIGHEST WEIGHT SEARCH ---------------- */
+  function getHighestPreviousWeight(exName, setIdx) {
     const splitObj = parsedSchedule[currentSplitIdx];
     const currentEx = splitObj.exercises[currentExerciseIdx];
 
     // SET 2+: Use previous set's weight from CURRENT session
-    if (setIdx > 0) {
-      if (currentEx.sets && currentEx.sets[setIdx - 1] && currentEx.sets[setIdx - 1].kg && currentEx.sets[setIdx - 1].kg !== "-") {
+    if (setIdx > 0 && currentEx.sets) {
+      if (currentEx.sets[setIdx - 1] && currentEx.sets[setIdx - 1].kg && currentEx.sets[setIdx - 1].kg !== "-") {
         return currentEx.sets[setIdx - 1].kg;
       }
-      if (currentEx.sets && currentEx.sets[0] && currentEx.sets[0].kg && currentEx.sets[0].kg !== "-") {
+      if (currentEx.sets[0] && currentEx.sets[0].kg && currentEx.sets[0].kg !== "-") {
         return currentEx.sets[0].kg;
       }
     }
 
-    // SET 1: Search exact exercise name match across previous week/imported schedule
-    if (currentEx.prevSets && currentEx.prevSets[0] && currentEx.prevSets[0].kg && currentEx.prevSets[0].kg !== "-") {
-      return currentEx.prevSets[0].kg;
-    }
-
+    // SET 1: Search highest weight (MAX KG) from most recent previous day
     const targetName = exName.trim().toLowerCase();
     for (let i = parsedSchedule.length - 1; i >= 0; i--) {
       const split = parsedSchedule[i];
       for (let j = split.exercises.length - 1; j >= 0; j--) {
         const e = split.exercises[j];
-        if (e.name.trim().toLowerCase() === targetName) {
-          if (e.sets && e.sets[0] && e.sets[0].kg && e.sets[0].kg !== "-") {
-            return e.sets[0].kg;
-          }
-          if (e.prevSets && e.prevSets[0] && e.prevSets[0].kg && e.prevSets[0].kg !== "-") {
-            return e.prevSets[0].kg;
+        if (e.name.trim().toLowerCase() === targetName && i !== currentSplitIdx) {
+          let sourceSets = (e.sets && e.sets.length > 0 && e.sets[0].kg) ? e.sets : e.prevSets;
+          if (sourceSets && sourceSets.length > 0) {
+            let maxKgNum = 0;
+            let maxKgStr = "0";
+
+            sourceSets.forEach(s => {
+              if (s && s.kg && s.kg !== "-") {
+                let cleanVal = s.kg.toString();
+                let numVal = parseFloat(cleanVal.split('-')[0]) || 0;
+                if (numVal >= maxKgNum) {
+                  maxKgNum = numVal;
+                  maxKgStr = cleanVal;
+                }
+              }
+            });
+
+            if (maxKgNum > 0) return maxKgStr;
           }
         }
       }
+    }
+
+    // Fallback if imported prevSets exist
+    if (currentEx.prevSets && currentEx.prevSets[0] && currentEx.prevSets[0].kg && currentEx.prevSets[0].kg !== "-") {
+      return currentEx.prevSets[0].kg;
     }
 
     return "0";
@@ -295,14 +364,13 @@
   function renderStep() {
     const splitObj = parsedSchedule[currentSplitIdx];
     const ex = splitObj.exercises[currentExerciseIdx];
-    setHeader(`${splitObj.title}`, true, true);
+    setHeader(`${splitObj.title}`, true, true, true, true);
     const body = document.getElementById('appBody');
 
     const totalSets = ex.setsCount || 3;
     const isPrime = ex.isPrime || ex.name.toLowerCase().includes('prime');
 
-    // Get previous or recorded weight value
-    let prevWeight = getSmartPreviousWeight(ex.name, currentSetIdx);
+    let prevWeight = getHighestPreviousWeight(ex.name, currentSetIdx);
 
     let repRange = ex.sxr;
     if (ex.sxr && ex.sxr.includes('x')) {
@@ -310,7 +378,7 @@
     }
 
     let headerHtml = `
-      <div class="card" style="text-align:center; padding:18px 12px;">
+      <div class="card" style="text-align:center; padding:16px 12px;">
         <div class="card-title">${ex.name}</div>
       </div>
 
@@ -334,6 +402,13 @@
       </div>
     `;
 
+    // Coach / Sheet Reference Note at Bottom
+    let coachNoteHtml = ex.sheetNote ? `
+      <div class="coach-note-box">
+        <b>SHEET NOTE:</b> ${ex.sheetNote}
+      </div>
+    ` : '';
+
     if (currentStep === 'WEIGHT') {
       let isTyped1 = activeWeightStr !== "";
       let displayVal1 = isTyped1 ? activeWeightStr : prevWeight;
@@ -344,7 +419,7 @@
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:16px; text-align:center;">WEIGHT (KG)</div>
+          <div class="card-title" style="font-size:15px; text-align:center;">WEIGHT (KG)</div>
           ${isPrime ? `
             <div style="display:flex; gap:8px;">
               <div class="weight-display ${isTyped1 ? 'active' : 'previous'}" style="flex:1;" onclick="activePrimePin=1; renderStep();">
@@ -374,8 +449,9 @@
             <button class="keypad-btn" onclick="pressKey('0')">0</button>
             <button class="keypad-btn action" onclick="pressKey('⌫')">⌫</button>
           </div>
-          <button class="btn-primary" style="margin-top:8px;" onclick="saveWeightNext('${prevWeight}')">NEXT</button>
+          <button class="btn-primary" style="margin-top:6px;" onclick="saveWeightNext('${prevWeight}')">NEXT</button>
         </div>
+        ${coachNoteHtml}
       `;
     }
     else if (currentStep === 'REPS') {
@@ -386,37 +462,40 @@
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:16px; text-align:center;">REPS</div>
+          <div class="card-title" style="font-size:15px; text-align:center;">REPS</div>
           <div class="options-grid">${repOptions}</div>
         </div>
+        ${coachNoteHtml}
       `;
     }
     else if (currentStep === 'RQ') {
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:16px; text-align:center;">RQ</div>
+          <div class="card-title" style="font-size:15px; text-align:center;">RQ</div>
           <div class="options-grid">
-            <div class="option-card opt-S" onclick="saveRqNext('S')">S</div>
-            <div class="option-card opt-A" onclick="saveRqNext('A')">A</div>
-            <div class="option-card opt-B" onclick="saveRqNext('B')">B</div>
-            <div class="option-card opt-C" onclick="saveRqNext('C')">C</div>
+            <div class="option-card opt-S" id="opt_RQ_S" onclick="saveRqNext('S', this)">S</div>
+            <div class="option-card opt-A" id="opt_RQ_A" onclick="saveRqNext('A', this)">A</div>
+            <div class="option-card opt-B" id="opt_RQ_B" onclick="saveRqNext('B', this)">B</div>
+            <div class="option-card opt-C" id="opt_RQ_C" onclick="saveRqNext('C', this)">C</div>
           </div>
         </div>
+        ${coachNoteHtml}
       `;
     }
     else if (currentStep === 'FR') {
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:16px; text-align:center;">FR</div>
+          <div class="card-title" style="font-size:15px; text-align:center;">FR</div>
           <div class="options-grid">
-            <div class="option-card opt-S" onclick="saveFrNext('S')">S</div>
-            <div class="option-card opt-A" onclick="saveFrNext('A')">A</div>
-            <div class="option-card opt-B" onclick="saveFrNext('B')">B</div>
-            <div class="option-card opt-C" onclick="saveFrNext('C')">C</div>
+            <div class="option-card opt-S" id="opt_FR_S" onclick="saveFrNext('S', this)">S</div>
+            <div class="option-card opt-A" id="opt_FR_A" onclick="saveFrNext('A', this)">A</div>
+            <div class="option-card opt-B" id="opt_FR_B" onclick="saveFrNext('B', this)">B</div>
+            <div class="option-card opt-C" id="opt_FR_C" onclick="saveFrNext('C', this)">C</div>
           </div>
         </div>
+        ${coachNoteHtml}
       `;
     }
     else if (currentStep === 'RIR') {
@@ -427,9 +506,10 @@
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:16px; text-align:center;">RIR</div>
+          <div class="card-title" style="font-size:15px; text-align:center;">RIR</div>
           <div class="options-grid" style="grid-template-columns:repeat(3, 1fr);">${rirOptions}</div>
         </div>
+        ${coachNoteHtml}
       `;
     }
     else if (currentStep === 'NOTE') {
@@ -437,9 +517,10 @@
       body.innerHTML = `
         <div class="card">
           <div class="card-title">NOTES</div>
-          <textarea id="noteInput" rows="5" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:15px; width:100%; resize:none;">${existingNote}</textarea>
+          <textarea id="noteInput" rows="5" oninput="instantSaveNote(this.value)" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:15px; width:100%; resize:none;">${existingNote}</textarea>
           <button class="btn-primary" style="background:#22c55e; color:#000; margin-top:8px;" onclick="saveNoteFinish()">DONE</button>
         </div>
+        ${coachNoteHtml}
       `;
     }
   }
@@ -478,6 +559,7 @@
 
     ensureSetObject();
     ex.sets[currentSetIdx].kg = val;
+    saveState();
     currentStep = 'REPS';
     renderStep();
   }
@@ -486,24 +568,35 @@
     const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
     ensureSetObject();
     ex.sets[currentSetIdx].reps = repsVal;
+    saveState();
     currentStep = 'RQ';
     renderStep();
   }
 
-  function saveRqNext(rqVal) {
+  function saveRqNext(rqVal, el) {
+    if (el) el.classList.add('selected-anim');
     const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
     ensureSetObject();
     ex.sets[currentSetIdx].rq = rqVal;
-    currentStep = 'FR';
-    renderStep();
+    saveState();
+
+    setTimeout(() => {
+      currentStep = 'FR';
+      renderStep();
+    }, 180);
   }
 
-  function saveFrNext(frVal) {
+  function saveFrNext(frVal, el) {
+    if (el) el.classList.add('selected-anim');
     const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
     ensureSetObject();
     ex.sets[currentSetIdx].fr = frVal;
-    currentStep = 'RIR';
-    renderStep();
+    saveState();
+
+    setTimeout(() => {
+      currentStep = 'RIR';
+      renderStep();
+    }, 180);
   }
 
   function saveRirNext(rirVal) {
@@ -524,9 +617,16 @@
     renderStep();
   }
 
+  function instantSaveNote(val) {
+    const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
+    ex.note = val;
+    saveState();
+  }
+
   function saveNoteFinish() {
     const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
-    ex.note = document.getElementById('noteInput').value;
+    const noteEl = document.getElementById('noteInput');
+    if (noteEl) ex.note = noteEl.value;
     ex.isComplete = true;
     saveState();
     renderExerciseList();
@@ -539,13 +639,14 @@
   }
 
   function saveState() {
-    localStorage.setItem('hajime_v4_data', JSON.stringify(parsedSchedule));
+    localStorage.setItem('hajime_v5_data', JSON.stringify(parsedSchedule));
   }
 
-  /* ---------------- EXPORT TSV ---------------- */
+  /* ---------------- EXPORT TSV & APPS SCRIPT CLOUD SYNC ---------------- */
   function exportWorkoutSheet() {
     const exercises = parsedSchedule[currentSplitIdx].exercises || [];
     let exportRows = [];
+    let rawPayloadRows = [];
 
     exercises.forEach(ex => {
       let rowCells = [];
@@ -562,15 +663,27 @@
       }
       rowCells.push(ex.note || "");
       exportRows.push(rowCells.join('\t'));
+      rawPayloadRows.push(rowCells);
     });
 
     let finalTsvText = exportRows.join('\n');
 
+    // 1. Copy to Clipboard (Fallback)
     navigator.clipboard.writeText(finalTsvText).then(() => {
       triggerExportSuccess();
     }).catch(() => {
       triggerExportSuccess();
     });
+
+    // 2. Cloud Auto Sync if Apps Script URL is provided
+    if (appsScriptUrl && appsScriptUrl.trim() !== "") {
+      fetch(appsScriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rawPayloadRows)
+      }).catch(err => console.log("Cloud sync error: ", err));
+    }
   }
 
   function triggerExportSuccess() {
@@ -589,6 +702,7 @@
 
   /* ---------------- UPDATE MODAL & TSV PARSER ---------------- */
   function openUpdateModal() {
+    document.getElementById('scriptUrlInput').value = appsScriptUrl;
     document.getElementById('updateModal').style.display = 'flex';
   }
 
@@ -614,9 +728,13 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
   }
 
   function processSheetUpdate() {
+    appsScriptUrl = document.getElementById('scriptUrlInput').value.trim();
+    localStorage.setItem('hajime_script_url', appsScriptUrl);
+
     const text = document.getElementById('tsvInput').value;
     if (!text || !text.trim()) {
-      alert("Please paste TSV data first.");
+      closeUpdateModal();
+      renderHomeScreen();
       return;
     }
 
@@ -690,7 +808,7 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
         prevSets.push({ kg, reps, rq, fr, rir });
       }
 
-      let note = parts[22] ? parts[22].replace(/"/g, '').trim() : "";
+      let sheetNote = parts[22] ? parts[22].replace(/"/g, '').trim() : "";
       let isComplete = (filledSetsCount >= setsCount && setsCount > 0);
 
       currentSplitObj.exercises.push({
@@ -701,7 +819,8 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
         setsCount: setsCount,
         prevSets: prevSets,
         sets: isComplete ? JSON.parse(JSON.stringify(prevSets)) : [],
-        note: note,
+        sheetNote: sheetNote,
+        note: "",
         isComplete: isComplete,
         isPrime: exName.toLowerCase().includes('prime')
       });
