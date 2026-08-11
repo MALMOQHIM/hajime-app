@@ -40,7 +40,7 @@
     /* Split Cards & Exercise Badges */
     .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
     .split-card.completed { background: rgba(34, 197, 94, 0.12); border-color: #22c55e; color: #4ade80; }
-    .split-card.partial { background: rgba(113, 113, 122, 0.15); border-color: #71717a; color: #a1a1aa; }
+    .split-card.partial { background: rgba(113, 113, 122, 0.25); border-color: #71717a; color: #e4e4e7; }
 
     /* 4-Column Sub Grid for Exercise Info */
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -53,9 +53,10 @@
     .btn-primary:active { opacity: 0.8; }
 
     /* Keypad Weight Display */
-    .weight-display { font-size: 36px; font-weight: 900; text-align: center; padding: 10px; background: #27272a; border-radius: 12px; margin-bottom: 6px; }
+    .weight-display { font-size: 36px; font-weight: 900; text-align: center; padding: 10px; background: #27272a; border-radius: 12px; margin-bottom: 6px; border: 2px solid transparent; }
     .weight-display.previous { color: #71717a; }
     .weight-display.active { color: #eab308; }
+    .weight-display.focused { border-color: #3b82f6; }
 
     .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .keypad-btn { background: #27272a; color: #f4f4f5; border: none; padding: 16px; border-radius: 12px; font-size: 22px; font-weight: 800; cursor: pointer; }
@@ -98,11 +99,11 @@
   <!-- Dynamic Screen Content -->
   <div class="app-body" id="appBody"></div>
 
-  <!-- Update Schedule & Apps Script Settings Modal -->
+  <!-- Update Schedule Modal -->
   <div class="modal-overlay" id="updateModal">
     <div class="modal-card">
       <div class="card-title">UPDATE SCHEDULE</div>
-      <div style="font-size:11px; color:#71717a; margin-bottom:2px;">Google Apps Script Web App URL (Optional for Cloud Sync):</div>
+      <div style="font-size:11px; color:#71717a; margin-bottom:2px;">Google Apps Script Web App URL:</div>
       <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:11px; width:100%;">
       
       <div style="font-size:11px; color:#71717a; margin-top:4px;">Paste TSV Text from Google Sheets:</div>
@@ -119,7 +120,7 @@
 
 <script>
   // Persistent State
-  let parsedSchedule = JSON.parse(localStorage.getItem('hajime_v5_data')) || [];
+  let parsedSchedule = JSON.parse(localStorage.getItem('hajime_v6_data')) || [];
   let appsScriptUrl = localStorage.getItem('hajime_script_url') || "";
   let currentSplitIdx = null;
   let currentExerciseIdx = null;
@@ -128,7 +129,7 @@
   
   let activeWeightStr = "";
   let activeWeightStr2 = "";
-  let activePrimePin = 1;
+  let activePrimePin = 1; // Default ALWAYS Left Pin (1)
 
   window.onload = function() {
     renderHomeScreen();
@@ -188,7 +189,7 @@
       if (currentSetIdx + 1 < totalSets) {
         currentSetIdx++;
         currentStep = 'WEIGHT';
-        activeWeightStr = ""; activeWeightStr2 = "";
+        activeWeightStr = ""; activeWeightStr2 = ""; activePrimePin = 1;
       } else {
         currentStep = 'NOTE';
       }
@@ -249,9 +250,14 @@
       let exList = splitObj.exercises || [];
       let completedCount = exList.filter(e => e.isComplete).length;
       let isDone = completedCount === exList.length && exList.length > 0;
+      
+      // Check partial state: any exercise done or partially filled
+      let isPartial = !isDone && exList.some(e => e.isComplete || (e.sets && e.sets.some(s => s && s.kg && s.kg !== "-")));
+
+      let cardClass = isDone ? 'completed' : (isPartial ? 'partial' : '');
 
       return `
-        <div class="split-card ${isDone ? 'completed' : ''}" onclick="selectSplit(${idx})">
+        <div class="split-card ${cardClass}" onclick="selectSplit(${idx})">
           <div style="font-weight:800; font-size:17px; text-transform:uppercase;">${splitObj.title}</div>
           <div style="font-weight:800; font-size:16px;">${completedCount} / ${exList.length} ${isDone ? '✓' : ''}</div>
         </div>
@@ -300,15 +306,28 @@
 
   function startExercise(idx) {
     currentExerciseIdx = idx;
-    currentSetIdx = 0;
+    const ex = parsedSchedule[currentSplitIdx].exercises[idx];
+    
+    // Resume at first incomplete set if available
+    let resumeSetIdx = 0;
+    if (ex.sets && ex.sets.length > 0) {
+      let incompleteIdx = ex.sets.findIndex(s => !s || s.rir === undefined || s.rir === "");
+      if (incompleteIdx !== -1) {
+        resumeSetIdx = incompleteIdx;
+      } else if (ex.sets.length < (ex.setsCount || 3)) {
+        resumeSetIdx = ex.sets.length;
+      }
+    }
+
+    currentSetIdx = resumeSetIdx;
     currentStep = 'WEIGHT';
     activeWeightStr = "";
     activeWeightStr2 = "";
-    activePrimePin = 1;
+    activePrimePin = 1; // Always start Pin 1 (Left)
     renderStep();
   }
 
-  /* ---------------- SMART HIGHEST WEIGHT SEARCH ---------------- */
+  /* ---------------- SMART HIGHEST WEIGHT SEARCH (FR EXCLUDE C) ---------------- */
   function getHighestPreviousWeight(exName, setIdx) {
     const splitObj = parsedSchedule[currentSplitIdx];
     const currentEx = splitObj.exercises[currentExerciseIdx];
@@ -323,7 +342,7 @@
       }
     }
 
-    // SET 1: Search highest weight (MAX KG) from most recent previous day
+    // SET 1: Search highest weight (MAX KG) from most recent previous day, excluding FR = 'C'
     const targetName = exName.trim().toLowerCase();
     for (let i = parsedSchedule.length - 1; i >= 0; i--) {
       const split = parsedSchedule[i];
@@ -337,11 +356,15 @@
 
             sourceSets.forEach(s => {
               if (s && s.kg && s.kg !== "-") {
-                let cleanVal = s.kg.toString();
-                let numVal = parseFloat(cleanVal.split('-')[0]) || 0;
-                if (numVal >= maxKgNum) {
-                  maxKgNum = numVal;
-                  maxKgStr = cleanVal;
+                let frVal = (s.fr || "").toString().trim().toUpperCase();
+                // Filter out FR = 'C'
+                if (frVal === 'S' || frVal === 'A' || frVal === 'B' || frVal === '') {
+                  let cleanVal = s.kg.toString();
+                  let numVal = parseFloat(cleanVal.split('-')[0]) || 0;
+                  if (numVal >= maxKgNum) {
+                    maxKgNum = numVal;
+                    maxKgStr = cleanVal;
+                  }
                 }
               }
             });
@@ -352,7 +375,6 @@
       }
     }
 
-    // Fallback if imported prevSets exist
     if (currentEx.prevSets && currentEx.prevSets[0] && currentEx.prevSets[0].kg && currentEx.prevSets[0].kg !== "-") {
       return currentEx.prevSets[0].kg;
     }
@@ -371,6 +393,9 @@
     const isPrime = ex.isPrime || ex.name.toLowerCase().includes('prime');
 
     let prevWeight = getHighestPreviousWeight(ex.name, currentSetIdx);
+    let pParts = prevWeight.toString().split('-');
+    let prevP1 = pParts[0] || '0';
+    let prevP2 = pParts[1] || prevP1;
 
     let repRange = ex.sxr;
     if (ex.sxr && ex.sxr.includes('x')) {
@@ -402,7 +427,6 @@
       </div>
     `;
 
-    // Coach / Sheet Reference Note at Bottom
     let coachNoteHtml = ex.sheetNote ? `
       <div class="coach-note-box">
         <b>SHEET NOTE:</b> ${ex.sheetNote}
@@ -411,10 +435,10 @@
 
     if (currentStep === 'WEIGHT') {
       let isTyped1 = activeWeightStr !== "";
-      let displayVal1 = isTyped1 ? activeWeightStr : prevWeight;
+      let displayVal1 = isTyped1 ? activeWeightStr : prevP1;
 
       let isTyped2 = activeWeightStr2 !== "";
-      let displayVal2 = isTyped2 ? activeWeightStr2 : prevWeight;
+      let displayVal2 = isTyped2 ? activeWeightStr2 : prevP2;
 
       body.innerHTML = `
         ${headerHtml}
@@ -422,10 +446,10 @@
           <div class="card-title" style="font-size:15px; text-align:center;">WEIGHT (KG)</div>
           ${isPrime ? `
             <div style="display:flex; gap:8px;">
-              <div class="weight-display ${isTyped1 ? 'active' : 'previous'}" style="flex:1;" onclick="activePrimePin=1; renderStep();">
+              <div class="weight-display ${isTyped1 ? 'active' : 'previous'} ${activePrimePin===1 ? 'focused' : ''}" style="flex:1;" onclick="activePrimePin=1; renderStep();">
                 ${displayVal1}
               </div>
-              <div class="weight-display ${isTyped2 ? 'active' : 'previous'}" style="flex:1;" onclick="activePrimePin=2; renderStep();">
+              <div class="weight-display ${isTyped2 ? 'active' : 'previous'} ${activePrimePin===2 ? 'focused' : ''}" style="flex:1;" onclick="activePrimePin=2; renderStep();">
                 ${displayVal2}
               </div>
             </div>
@@ -474,10 +498,10 @@
         <div class="card">
           <div class="card-title" style="font-size:15px; text-align:center;">RQ</div>
           <div class="options-grid">
-            <div class="option-card opt-S" id="opt_RQ_S" onclick="saveRqNext('S', this)">S</div>
-            <div class="option-card opt-A" id="opt_RQ_A" onclick="saveRqNext('A', this)">A</div>
-            <div class="option-card opt-B" id="opt_RQ_B" onclick="saveRqNext('B', this)">B</div>
-            <div class="option-card opt-C" id="opt_RQ_C" onclick="saveRqNext('C', this)">C</div>
+            <div class="option-card opt-S" onclick="saveRqNext('S', this)">S</div>
+            <div class="option-card opt-A" onclick="saveRqNext('A', this)">A</div>
+            <div class="option-card opt-B" onclick="saveRqNext('B', this)">B</div>
+            <div class="option-card opt-C" onclick="saveRqNext('C', this)">C</div>
           </div>
         </div>
         ${coachNoteHtml}
@@ -489,10 +513,10 @@
         <div class="card">
           <div class="card-title" style="font-size:15px; text-align:center;">FR</div>
           <div class="options-grid">
-            <div class="option-card opt-S" id="opt_FR_S" onclick="saveFrNext('S', this)">S</div>
-            <div class="option-card opt-A" id="opt_FR_A" onclick="saveFrNext('A', this)">A</div>
-            <div class="option-card opt-B" id="opt_FR_B" onclick="saveFrNext('B', this)">B</div>
-            <div class="option-card opt-C" id="opt_FR_C" onclick="saveFrNext('C', this)">C</div>
+            <div class="option-card opt-S" onclick="saveFrNext('S', this)">S</div>
+            <div class="option-card opt-A" onclick="saveFrNext('A', this)">A</div>
+            <div class="option-card opt-B" onclick="saveFrNext('B', this)">B</div>
+            <div class="option-card opt-C" onclick="saveFrNext('C', this)">C</div>
           </div>
         </div>
         ${coachNoteHtml}
@@ -546,14 +570,17 @@
   function saveWeightNext(prevWeight) {
     const ex = parsedSchedule[currentSplitIdx].exercises[currentExerciseIdx];
     const isPrime = ex.isPrime || ex.name.toLowerCase().includes('prime');
-    
+    let pParts = prevWeight.toString().split('-');
+    let p1 = pParts[0] || '0';
+    let p2 = pParts[1] || p1;
+
     let isTyped1 = activeWeightStr !== "";
     let isTyped2 = activeWeightStr2 !== "";
 
-    let val = isTyped1 ? activeWeightStr : prevWeight;
-    if (isPrime && (isTyped1 || isTyped2)) {
-      let w1 = isTyped1 ? activeWeightStr : prevWeight;
-      let w2 = isTyped2 ? activeWeightStr2 : prevWeight;
+    let val = isTyped1 ? activeWeightStr : p1;
+    if (isPrime) {
+      let w1 = isTyped1 ? activeWeightStr : p1;
+      let w2 = isTyped2 ? activeWeightStr2 : p2;
       val = `${w1}-${w2}`;
     }
 
@@ -610,6 +637,7 @@
       currentStep = 'WEIGHT';
       activeWeightStr = "";
       activeWeightStr2 = "";
+      activePrimePin = 1;
     } else {
       currentStep = 'NOTE';
     }
@@ -639,7 +667,7 @@
   }
 
   function saveState() {
-    localStorage.setItem('hajime_v5_data', JSON.stringify(parsedSchedule));
+    localStorage.setItem('hajime_v6_data', JSON.stringify(parsedSchedule));
   }
 
   /* ---------------- EXPORT TSV & APPS SCRIPT CLOUD SYNC ---------------- */
@@ -652,11 +680,13 @@
       let rowCells = [];
       for (let s = 0; s < 3; s++) {
         if (ex.sets && ex.sets[s]) {
-          rowCells.push(ex.sets[s].kg || "-");
-          rowCells.push(ex.sets[s].reps || "-");
-          rowCells.push(ex.sets[s].rq || "-");
-          rowCells.push(ex.sets[s].fr || "-");
-          rowCells.push(ex.sets[s].rir || "-");
+          let setObj = ex.sets[s];
+          rowCells.push((setObj.kg !== undefined && setObj.kg !== null && setObj.kg !== "") ? setObj.kg : "-");
+          rowCells.push((setObj.reps !== undefined && setObj.reps !== null && setObj.reps !== "") ? setObj.reps : "-");
+          rowCells.push((setObj.rq !== undefined && setObj.rq !== null && setObj.rq !== "") ? setObj.rq : "-");
+          rowCells.push((setObj.fr !== undefined && setObj.fr !== null && setObj.fr !== "") ? setObj.fr : "-");
+          // EXPORT RIR FIX: Keep "0" as 0 explicitly!
+          rowCells.push((setObj.rir !== undefined && setObj.rir !== null && setObj.rir !== "") ? setObj.rir : "-");
         } else {
           rowCells.push("-", "-", "-", "-", "-");
         }
