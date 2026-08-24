@@ -28,14 +28,14 @@
     .nav-arrow-btn:active { background: #3b82f6; color: #fff; }
 
     /* Body Container */
-    .app-body { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .app-body { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
     /* Cards Layout */
     .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
     .card-title { font-size: 18px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* Coach Note Box */
-    .coach-note-box { background: rgba(59, 130, 246, 0.08); border: 1px dashed #3b82f6; border-radius: 12px; padding: 12px; color: #93c5fd; font-size: 13px; font-weight: 600; line-height: 1.4; }
+    .coach-note-box { background: rgba(59, 130, 246, 0.08); border: 1px dashed #3b82f6; border-radius: 12px; padding: 10px 12px; color: #93c5fd; font-size: 12px; font-weight: 600; line-height: 1.4; }
 
     /* Split Cards & Exercise Badges */
     .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
@@ -74,6 +74,11 @@
 
     /* Feedback Touch Animation */
     .option-card.selected-anim { transform: scale(0.92); border-color: #ffffff !important; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+
+    /* Summary Card Specific Styles */
+    .summary-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .summary-title { font-size: 10px; font-weight: 800; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; background: #222226; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; border: 1px solid #2e2e33; }
 
     /* Modal Overlay */
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: none; justify-content: center; align-items: center; padding: 16px; z-index: 50; }
@@ -250,8 +255,6 @@
       let exList = splitObj.exercises || [];
       let completedCount = exList.filter(e => e.isComplete).length;
       let isDone = completedCount === exList.length && exList.length > 0;
-      
-      // Check partial state: any exercise done or partially filled
       let isPartial = !isDone && exList.some(e => e.isComplete || (e.sets && e.sets.some(s => s && s.kg && s.kg !== "-")));
 
       let cardClass = isDone ? 'completed' : (isPartial ? 'partial' : '');
@@ -308,7 +311,6 @@
     currentExerciseIdx = idx;
     const ex = parsedSchedule[currentSplitIdx].exercises[idx];
     
-    // Resume at first incomplete set if available
     let resumeSetIdx = 0;
     if (ex.sets && ex.sets.length > 0) {
       let incompleteIdx = ex.sets.findIndex(s => !s || s.rir === undefined || s.rir === "");
@@ -323,7 +325,7 @@
     currentStep = 'WEIGHT';
     activeWeightStr = "";
     activeWeightStr2 = "";
-    activePrimePin = 1; // Always start Pin 1 (Left)
+    activePrimePin = 1;
     renderStep();
   }
 
@@ -332,7 +334,6 @@
     const splitObj = parsedSchedule[currentSplitIdx];
     const currentEx = splitObj.exercises[currentExerciseIdx];
 
-    // SET 2+: Use previous set's weight from CURRENT session
     if (setIdx > 0 && currentEx.sets) {
       if (currentEx.sets[setIdx - 1] && currentEx.sets[setIdx - 1].kg && currentEx.sets[setIdx - 1].kg !== "-") {
         return currentEx.sets[setIdx - 1].kg;
@@ -342,7 +343,6 @@
       }
     }
 
-    // SET 1: Search highest weight (MAX KG) from most recent previous day, excluding FR = 'C'
     const targetName = exName.trim().toLowerCase();
     for (let i = parsedSchedule.length - 1; i >= 0; i--) {
       const split = parsedSchedule[i];
@@ -357,7 +357,6 @@
             sourceSets.forEach(s => {
               if (s && s.kg && s.kg !== "-") {
                 let frVal = (s.fr || "").toString().trim().toUpperCase();
-                // Filter out FR = 'C'
                 if (frVal === 'S' || frVal === 'A' || frVal === 'B' || frVal === '') {
                   let cleanVal = s.kg.toString();
                   let numVal = parseFloat(cleanVal.split('-')[0]) || 0;
@@ -380,6 +379,82 @@
     }
 
     return "0";
+  }
+
+  /* ---------------- LAST WEEK SUMMARY BUILDER ---------------- */
+  function getGradeColor(grade) {
+    if (!grade) return '#71717a';
+    grade = grade.toString().toUpperCase().trim();
+    if (grade === 'S') return '#fde047';
+    if (grade === 'A') return '#4ade80';
+    if (grade === 'B') return '#60a5fa';
+    if (grade === 'C') return '#f87171';
+    return '#a1a1aa';
+  }
+
+  function getPreviousSessionSets(ex) {
+    // 1. First check prevSets parsed from sheet
+    if (ex.prevSets && ex.prevSets.some(s => s && s.kg && s.kg !== "-")) {
+      return ex.prevSets;
+    }
+
+    // 2. Search backward in previous splits for matching exercise
+    const targetName = ex.name.trim().toLowerCase();
+    for (let i = parsedSchedule.length - 1; i >= 0; i--) {
+      if (i === currentSplitIdx) continue;
+      const split = parsedSchedule[i];
+      for (let j = split.exercises.length - 1; j >= 0; j--) {
+        const e = split.exercises[j];
+        if (e.name.trim().toLowerCase() === targetName) {
+          let source = (e.sets && e.sets.some(s => s && s.kg && s.kg !== "-")) ? e.sets : e.prevSets;
+          if (source && source.some(s => s && s.kg && s.kg !== "-")) {
+            return source;
+          }
+        }
+      }
+    }
+    return ex.prevSets || [];
+  }
+
+  function renderPreviousSummaryHtml(ex) {
+    const prevList = getPreviousSessionSets(ex);
+    const validRows = prevList.filter(s => s && s.kg && s.kg !== "-");
+
+    if (validRows.length === 0) {
+      return `
+        <div class="summary-card">
+          <div class="summary-title">LAST WEEK LOG</div>
+          <div style="font-size:11px; color:#52525b; text-align:center; font-weight:700; padding:2px 0;">NO PREVIOUS LOG FOUND</div>
+        </div>
+      `;
+    }
+
+    let rowsHtml = validRows.map((s, idx) => {
+      let rqColor = getGradeColor(s.rq);
+      let frColor = getGradeColor(s.fr);
+      let rirVal = (s.rir !== undefined && s.rir !== null && s.rir !== "") ? s.rir : '-';
+
+      return `
+        <div class="summary-row">
+          <span style="color:#3b82f6; width:22px;">S${idx + 1}</span>
+          <span style="color:#f4f4f5; flex:1; text-align:left; padding-left:6px;">
+            ${s.kg} <span style="font-size:9px; color:#71717a; font-weight:700;">KG</span> × ${s.reps || '-'}
+          </span>
+          <span style="display:flex; gap:6px; font-size:11px;">
+            <span style="color:#71717a;">RQ <b style="color:${rqColor};">${s.rq || '-'}</b></span>
+            <span style="color:#71717a;">FR <b style="color:${frColor};">${s.fr || '-'}</b></span>
+            <span style="color:#71717a;">RIR <b style="color:#eab308;">${rirVal}</b></span>
+          </span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="summary-card">
+        <div class="summary-title">LAST WEEK LOG</div>
+        ${rowsHtml}
+      </div>
+    `;
   }
 
   /* ---------------- SCREEN 4: STEP LOGGING ---------------- */
@@ -433,6 +508,8 @@
       </div>
     ` : '';
 
+    let prevSummaryHtml = (currentStep !== 'NOTE') ? renderPreviousSummaryHtml(ex) : '';
+
     if (currentStep === 'WEIGHT') {
       let isTyped1 = activeWeightStr !== "";
       let displayVal1 = isTyped1 ? activeWeightStr : prevP1;
@@ -475,6 +552,7 @@
           </div>
           <button class="btn-primary" style="margin-top:6px;" onclick="saveWeightNext('${prevWeight}')">NEXT</button>
         </div>
+        ${prevSummaryHtml}
         ${coachNoteHtml}
       `;
     }
@@ -489,6 +567,7 @@
           <div class="card-title" style="font-size:15px; text-align:center;">REPS</div>
           <div class="options-grid">${repOptions}</div>
         </div>
+        ${prevSummaryHtml}
         ${coachNoteHtml}
       `;
     }
@@ -504,6 +583,7 @@
             <div class="option-card opt-C" onclick="saveRqNext('C', this)">C</div>
           </div>
         </div>
+        ${prevSummaryHtml}
         ${coachNoteHtml}
       `;
     }
@@ -519,6 +599,7 @@
             <div class="option-card opt-C" onclick="saveFrNext('C', this)">C</div>
           </div>
         </div>
+        ${prevSummaryHtml}
         ${coachNoteHtml}
       `;
     }
@@ -533,6 +614,7 @@
           <div class="card-title" style="font-size:15px; text-align:center;">RIR</div>
           <div class="options-grid" style="grid-template-columns:repeat(3, 1fr);">${rirOptions}</div>
         </div>
+        ${prevSummaryHtml}
         ${coachNoteHtml}
       `;
     }
@@ -685,7 +767,6 @@
           rowCells.push((setObj.reps !== undefined && setObj.reps !== null && setObj.reps !== "") ? setObj.reps : "-");
           rowCells.push((setObj.rq !== undefined && setObj.rq !== null && setObj.rq !== "") ? setObj.rq : "-");
           rowCells.push((setObj.fr !== undefined && setObj.fr !== null && setObj.fr !== "") ? setObj.fr : "-");
-          // EXPORT RIR FIX: Keep "0" as 0 explicitly!
           rowCells.push((setObj.rir !== undefined && setObj.rir !== null && setObj.rir !== "") ? setObj.rir : "-");
         } else {
           rowCells.push("-", "-", "-", "-", "-");
