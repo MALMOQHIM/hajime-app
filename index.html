@@ -824,14 +824,14 @@
   function pasteSampleData() {
     const sampleTSV = `Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
 \t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/24\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t85\t7\tA\tB\t1\t75\t8\tA\tA\t1\t75\t9\tA\tA\t1\tاول جلستين كانت مسكه غير حقتي ومب مريحه
+7/24\t"ANTERIOR 1"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t85\t7\tA\tB\t1\t75\t8\tA\tA\t1\t75\t9\tA\tA\t1\tاول جلستين كانت مسكه غير حقتي ومب مريحه
 \t\t2\tUnilateral cable row\t\t2 x 8-10\t3\t36\t7\tA\tA\t1\t36\t8\tA\tA\t1\t\t\t\t\t\tيدي اليمين اقوى بواجد باللاتس السفلية
 \t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t8\tA\tA\t1\t70\t11\tA\tA\t1\t\t\t\t\t\t
 \t\t4\tRope Triceps Pushdown\t\t3 x 10-12\t2\t25\t8\tA\tA\t1\t20\t9\tA\tA\t1\t20\t11\tA\tA\t0\t
 \t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t11.5\t9\tA\tB\t0\t11.5\t11\tA\tA\t1\t\t\t\t\t\tملاحظة المدرب اعتماد التكنيك الثاني بارتفاع 48
 Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
 \t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/25\t"DAY\\n5"\t1\tRomanian Deadlift (Barbell)\t\t3 x 6-8\t4\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
+7/25\t"POSTERIOR 1"\t1\tRomanian Deadlift (Barbell)\t\t3 x 6-8\t4\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
 \t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
 \t\t3\tMachine Fly\t2\t3 x 10-12\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
 \t\t4\tLengthened Range Cable Lateral Raises\t16\t3 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tملاحظة المدرب اني اثبت جسمي`;
@@ -863,30 +863,43 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
 
       let rawDate = parts[0] ? parts[0].replace(/"/g, '').trim() : "";
       let rawWorkout = parts[1] ? parts[1].replace(/"/g, '').replace(/\\n/g, ' ').trim() : "";
+      let rawN = parts[2] ? parts[2].replace(/"/g, '').trim() : "";
+      let exName = parts[3] ? parts[3].replace(/"/g, '').trim() : "";
 
-      if (parts[3] && parts[3].toLowerCase().includes("exercise")) return;
+      // استبعاد أسطر العناوين أو الأسطر الفارغة
+      if (!exName || exName.toLowerCase() === "exercise" || exName.toLowerCase().includes("exercise") || exName === "N") return;
+      if (rawDate.toLowerCase() === "date" || rawWorkout.toLowerCase() === "workout") return;
 
-      if (rawWorkout.toUpperCase().includes("DAY") || (rawDate && rawDate.toLowerCase() !== "date" && rawDate !== "")) {
-        if (rawWorkout.toUpperCase().includes("DAY")) {
-          let splitTitle = rawWorkout.toUpperCase();
-          if (rawDate && rawDate.toLowerCase() !== "date" && rawDate !== "") {
-            splitTitle += ` (${rawDate})`;
-          }
+      let cleanWorkoutUpper = rawWorkout.toUpperCase();
 
-          currentSplitObj = {
-            title: splitTitle,
-            exercises: []
-          };
-          splitsArray.push(currentSplitObj);
+      // كشف الأيام التدريبية بمرونة كاملة (سواء Anterior/Posterior أو غيرها):
+      let isNewSplit = false;
+      if (!currentSplitObj) {
+        isNewSplit = true;
+      } else if (cleanWorkoutUpper !== "") {
+        if (cleanWorkoutUpper !== currentSplitObj.baseWorkout) {
+          isNewSplit = true;
+        } else if (rawN === "1") {
+          isNewSplit = true;
+        } else if (rawDate !== "" && rawDate !== currentSplitObj.baseDate && currentSplitObj.exercises.length > 0) {
+          isNewSplit = true;
         }
+      } else if (rawDate !== "" && rawDate !== currentSplitObj.baseDate && (rawN === "1" || currentSplitObj.exercises.length > 0)) {
+        isNewSplit = true;
+      } else if (rawN === "1" && currentSplitObj.exercises.length > 0) {
+        isNewSplit = true;
       }
 
-      let exName = parts[3] ? parts[3].replace(/"/g, '').trim() : "";
-      if (!exName || exName.toLowerCase() === "exercise" || exName === "N") return;
+      if (isNewSplit) {
+        let splitTitle = cleanWorkoutUpper ? cleanWorkoutUpper : (rawDate ? `WORKOUT (${rawDate})` : `DAY ${splitsArray.length + 1}`);
+        if (rawDate && rawDate.toLowerCase() !== "date" && cleanWorkoutUpper && !splitTitle.includes(rawDate)) {
+          splitTitle += ` (${rawDate})`;
+        }
 
-      if (!currentSplitObj) {
         currentSplitObj = {
-          title: rawWorkout ? rawWorkout.toUpperCase() : "DAY 1",
+          title: splitTitle,
+          baseWorkout: cleanWorkoutUpper,
+          baseDate: rawDate,
           exercises: []
         };
         splitsArray.push(currentSplitObj);
