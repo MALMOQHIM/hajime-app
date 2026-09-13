@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Hajime Pro Tracker</title>
+  <title>Hajime Tracker</title>
 
-  <!-- PWA & Mobile Web App Settings -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Hajime">
@@ -15,11 +14,10 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: #000000; color: #f4f4f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
 
-    /* Mobile Container Frame */
     .app-container { width: 100%; max-width: 430px; height: 100vh; max-height: 932px; background-color: #121215; display: flex; flex-direction: column; position: relative; overflow: hidden; }
     @media (min-width: 450px) { .app-container { height: 880px; border-radius: 36px; border: 6px solid #27272a; } }
 
-    /* Header Bar Navigation */
+    /* Header Bar */
     .app-header { height: 56px; background: #18181b; border-bottom: 1px solid #27272a; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 15px; font-weight: 800; color: #f4f4f5; letter-spacing: 0.5px; text-transform: uppercase; }
     .header-nav-group { display: flex; align-items: center; gap: 4px; }
     .header-btn { background: #27272a; border: none; color: #a1a1aa; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
@@ -27,28 +25,30 @@
     .nav-arrow-btn { background: #27272a; border: none; color: #3b82f6; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 900; cursor: pointer; }
     .nav-arrow-btn:active { background: #3b82f6; color: #fff; }
 
-    /* Action Icons */
-    .icon-btn { background: #27272a; border: 1px solid #3f3f46; color: #f4f4f5; padding: 6px 9px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-    .icon-btn:active { transform: scale(0.95); }
-    .icon-btn.danger { color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
-    .icon-btn.warning { color: #fde047; border-color: rgba(234, 179, 8, 0.4); }
-    .icon-btn.primary { color: #60a5fa; border-color: rgba(59, 130, 246, 0.4); }
+    /* Action Buttons Row */
+    .action-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+    .action-pill { background: #222226; border: 1px solid #2e2e33; color: #f4f4f5; padding: 8px 2px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .action-pill:active { transform: scale(0.95); }
+    .action-pill.warn { color: #facc15; border-color: rgba(250, 204, 21, 0.3); background: rgba(250, 204, 21, 0.08); }
+    .action-pill.danger { color: #f87171; border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); }
+    .action-pill.edit { color: #60a5fa; border-color: rgba(96, 165, 250, 0.3); background: rgba(96, 165, 250, 0.08); }
 
-    /* Body Container */
+    /* App Body */
     .app-body { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 
-    /* Week Selector Bar */
+    /* Week Dropdown */
     .week-bar { display: flex; align-items: center; gap: 6px; background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 6px 10px; }
     .week-dropdown { flex: 1; background: #27272a; color: #f4f4f5; border: 1px solid #3f3f46; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: 800; outline: none; text-align: center; }
 
-    /* Cards Layout */
-    .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; position: relative; }
-    .card-title { font-size: 17px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Big Clean Exercise Card */
+    .clean-ex-card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 18px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s; }
+    .clean-ex-card:active { transform: scale(0.98); }
+    .clean-ex-card.completed { background: rgba(34, 197, 94, 0.12); border-color: #22c55e; }
+    .clean-ex-card.skipped { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); }
+    .clean-ex-title { font-size: 16px; font-weight: 800; color: #ffffff; text-transform: uppercase; line-height: 1.3; flex: 1; }
 
-    /* Split Cards */
-    .split-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
-    .split-card.completed { background: rgba(34, 197, 94, 0.12); border-color: #22c55e; color: #4ade80; }
-    .split-card.partial { background: rgba(113, 113, 122, 0.25); border-color: #71717a; color: #e4e4e7; }
+    .card { background: #18181b; border: 1px solid #27272a; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-size: 17px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
 
     /* 4-Column Sub Grid for Exercise Info */
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -76,11 +76,10 @@
     .opt-B { background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; }
     .opt-C { background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #f87171; }
 
-    /* Action Buttons */
     .btn-primary { background: #3b82f6; color: #ffffff; border: none; padding: 15px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; text-align: center; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; }
     .btn-primary:active { opacity: 0.8; }
 
-    /* Summary Card Specific Styles */
+    /* Summary Card */
     .summary-card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
     .summary-title { font-size: 10px; font-weight: 800; color: #71717a; text-transform: uppercase; letter-spacing: 0.5px; }
     .summary-row { display: flex; justify-content: space-between; align-items: center; background: #222226; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; border: 1px solid #2e2e33; }
@@ -89,8 +88,7 @@
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: none; justify-content: center; align-items: center; padding: 16px; z-index: 60; }
     .modal-card { background: #18181b; border: 1px solid #27272a; border-radius: 18px; padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 10px; max-height: 90vh; overflow-y: auto; }
 
-    /* Toast Notification */
-    .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; display: none; z-index: 100; }
+    .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; display: none; z-index: 100; box-shadow: 0 4px 15px rgba(34,197,94,0.4); }
   </style>
 </head>
 <body>
@@ -98,36 +96,46 @@
   <!-- Top Navigation Header -->
   <div class="app-header" id="appHeader">
     <div class="header-nav-group">
-      <button class="icon-btn" id="btnExportTop" onclick="openExportModal()" title="Export TSV">📋</button>
       <button class="header-btn" id="btnBack" onclick="goBack()" style="visibility:hidden;">BACK</button>
       <button class="nav-arrow-btn" id="btnPrevStep" onclick="goPrevStep()" style="visibility:hidden;">‹</button>
       <button class="nav-arrow-btn" id="btnNextStep" onclick="goNextStep()" style="visibility:hidden;">›</button>
     </div>
     <span id="headerTitle">HAJIME</span>
     <div class="header-nav-group">
+      <button class="header-btn" id="btnAddWeek" onclick="openAddWeekModal()">+ WEEK</button>
       <button class="header-btn" id="btnList" onclick="goList()" style="visibility:hidden;">LIST</button>
       <button class="header-btn" id="btnHome" onclick="goHome()" style="visibility:hidden;">HOME</button>
-      <button class="icon-btn" id="btnImportTop" onclick="openImportModal()" title="Import Schedule">📥</button>
     </div>
   </div>
 
-  <!-- Dynamic Screen Content -->
+  <!-- Main Body Content -->
   <div class="app-body" id="appBody"></div>
 
   <!-- Toast Message -->
   <div class="toast" id="toastMsg">COPIED TO CLIPBOARD ✓</div>
 
-  <!-- Edit Exercise Modal -->
+  <!-- Modal: Edit Exercise & Change Order (N) -->
   <div class="modal-overlay" id="editModal">
     <div class="modal-card">
-      <div class="card-title">EDIT EXERCISE DETAILS</div>
-      <div style="font-size:11px; color:#71717a;">Exercise Name:</div>
-      <input type="text" id="editExName" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
-      
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div class="card-title">EDIT EXERCISE & ORDER</div>
+      <div style="display:grid; grid-template-columns:1fr 2fr; gap:8px;">
+        <div>
+          <div style="font-size:11px; color:#71717a;">Order (N):</div>
+          <input type="number" id="editExOrder" min="1" style="background:#27272a; color:#3b82f6; font-weight:900; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:14px; width:100%; text-align:center;">
+        </div>
         <div>
           <div style="font-size:11px; color:#71717a;">Seat Level:</div>
-          <input type="text" id="editExSeat" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
+          <input type="text" id="editExSeat" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:14px; width:100%;">
+        </div>
+      </div>
+
+      <div style="font-size:11px; color:#71717a;">Exercise Name:</div>
+      <input type="text" id="editExName" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div>
+          <div style="font-size:11px; color:#71717a;">Target S x R:</div>
+          <input type="text" id="editExSxr" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
         </div>
         <div>
           <div style="font-size:11px; color:#71717a;">Target RIR:</div>
@@ -135,798 +143,62 @@
         </div>
       </div>
 
-      <div style="font-size:11px; color:#71717a;">Target S x R (e.g. 3 x 8-10):</div>
-      <input type="text" id="editExSxr" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
-
       <div style="display:flex; gap:8px; margin-top:6px;">
-        <button class="btn-primary" onclick="saveExerciseEdit()">SAVE CHANGES</button>
+        <button class="btn-primary" onclick="saveExerciseEdit()">SAVE & REORDER</button>
         <button class="header-btn" onclick="closeEditModal()" style="padding:12px;">CANCEL</button>
       </div>
     </div>
   </div>
 
-  <!-- Export TSV Modal -->
-  <div class="modal-overlay" id="exportModal">
+  <!-- Modal: Day Export to Sheets (Handles Merged Cells) -->
+  <div class="modal-overlay" id="dayExportModal">
     <div class="modal-card">
-      <div class="card-title">COPY DATA FOR GOOGLE SHEETS</div>
-      <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">Direct TSV format matching your exact spreadsheet columns (includes Skip for skipped sets):</div>
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <button class="btn-primary" style="background:#22c55e; color:#000;" onclick="copyWorkoutTSV('workout')">COPY CURRENT WORKOUT</button>
-        <button class="btn-primary" style="background:#3b82f6;" onclick="copyWorkoutTSV('week')">COPY CURRENT WEEK</button>
-        <button class="btn-primary" style="background:#3f3f46;" onclick="copyWorkoutTSV('all')">COPY ALL 13 WEEKS</button>
+      <div class="card-title" id="exportDayTitle">EXPORT DAY TO SHEETS</div>
+      <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">اختر الطريقة المتوافقة مع جدولك:</div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <!-- Option 1: Copy Sets & Notes Only -->
+        <button class="btn-primary" style="background:#22c55e; color:#000; text-align:left; padding:12px;" onclick="copySetsOnly()">
+          <div style="font-weight:900;">1. نسخ الأوزان والجلسات فقط (موصى به للدمج)</div>
+          <div style="font-size:10px; opacity:0.8; margin-top:2px;">ينسخ من عامود Set 1 KG حتى Note فقط (الصقه مباشرة بأول خلية في Set 1 دون لمس التاريخ أو اسم التمرين).</div>
+        </button>
+
+        <!-- Option 2: Copy Full Day with Merged Structure -->
+        <button class="btn-primary" style="background:#27272a; border:1px solid #3f3f46; text-align:left; padding:12px;" onclick="copyFullDayMerged()">
+          <div style="font-weight:900;">2. نسخ اليوم كاملاً (من Date إلى Note)</div>
+          <div style="font-size:10px; opacity:0.8; margin-top:2px;">يضع التاريخ واسم التمرين بالسطر الأول فقط ويترك الباقي مفرغاً تماشياً مع الخلايا المدمجة.</div>
+        </button>
       </div>
-      <textarea id="tsvExportPreview" rows="5" readonly style="background:#27272a; color:#a1a1aa; border:1px solid #3f3f46; padding:8px; border-radius:8px; font-size:10px; font-family:monospace; resize:none;"></textarea>
-      <button class="header-btn" onclick="closeExportModal()" style="padding:10px;">CLOSE</button>
+
+      <textarea id="tsvDayPreview" rows="5" readonly style="background:#27272a; color:#a1a1aa; border:1px solid #3f3f46; padding:8px; border-radius:8px; font-size:10px; font-family:monospace; resize:none;"></textarea>
+      <button class="header-btn" onclick="closeDayExportModal()" style="padding:10px;">CLOSE</button>
     </div>
   </div>
 
-  <!-- Import TSV Modal -->
-  <div class="modal-overlay" id="importModal">
+  <!-- Modal: Add / Update Single Week -->
+  <div class="modal-overlay" id="addWeekModal">
     <div class="modal-card">
-      <div class="card-title">IMPORT ROUTINE</div>
-      <div style="font-size:11px; color:#a1a1aa;">Paste new days/weeks text to update your program:</div>
-      <textarea id="importTextInput" rows="8" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:11px; font-family:monospace; resize:none;"></textarea>
-      <button class="btn-primary" onclick="processScheduleImport()">APPLY IMPORT</button>
-      <button class="header-btn" onclick="closeImportModal()" style="padding:10px;">CANCEL</button>
+      <div class="card-title">ADD NEW WEEK</div>
+      <div style="font-size:11px; color:#71717a;">Week Label & Dates (e.g. Week 14 (10/5 - 10/11)):</div>
+      <input type="text" id="newWeekLabel" placeholder="Week 14 (10/5 - 10/11)" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
+
+      <div style="font-size:11px; color:#a1a1aa; margin-top:4px;">How would you like to create it?</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <button class="btn-primary" style="background:#3b82f6;" onclick="createWeekFromLatest()">DUPLICATE LAST 4-DAY SPLIT</button>
+      </div>
+      <button class="header-btn" onclick="closeAddWeekModal()" style="padding:10px; margin-top:4px;">CANCEL</button>
     </div>
   </div>
 </div>
 
 <script>
-  /* ---------------- MASTER DATA SEED (ALL 62 WORKOUT DAYS) ---------------- */
-  const SEED_HISTORY_DATA = `Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/3
-Anterior
-(B)
-1RDL machine2 x 6-80-22009SA32008AA1الجلسه الاولى وقفت بسبب الم خلف رقبتي يمين2Prime Machine Incline Chest Press2 x 6-80-240-408BA140-455AA03Chest Fly Machine4-12 x 8-120-2609BA2559AA1جربت كم جهاز قبل ابدا الجلسة الفعلية وتعبت عضلاتي شوي4Single Cable Ltrial Raises163 x 8-120-27.58AA27.58BA1610AS1انا ابدا بيدي اليسار لانها اضعف بس احس الوزن اثقل اذا جيت لليمين5Precher Curl Machine62 x 8-120-210-1010AA02011BS1First set was prime machine6Single Cuffed Cable Reverse Curl2 x 8-120-2157AS013.59AA07Cable Cruches2 x 8-120-234.512BA2367BA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/4
-Posterior
-(B)
-1Prime Upper Back Machine4-52 x 6-80-230-47.58AA130-47.57AA02Prime Kilso Upper Back Machine4-51 x 8-120-230-42.57AA03Lat Pulldown Wide Grip Machine2-22 x 8-120-2958AA1908AA14Prime Leg Extension Machine6-32 x 8-120-220-807AA120-609AA05Cable Triceps Overhead5-22 x 8-120-22410AA1247BA06Single Lat Pulldown Machine7-32 x 8-120-2608AA0559BA17Seated Cable Triceps Pushdown302 x 8-120-22110BA1217AA08Seated Calve Raises Machine2 x 8-120-25010BB1507AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/6
-Anterior
-(A)
-1Chest Press Machine2 x 6-80-2907AA1807BA02Prime Machine Incline Chest Press2 x 6-80-240-408AA140-405AA03Seated Hamstring Curl Machine10-D2 x 8-120-21257BA11207AA04Single Cable Latrial Raises163 x 8-120-27.510AA17.510AA07.59AB05Precher Curl Machine62 x 8-120-2278AS122.58AS06Single Cuffed Cable Reverse Curl2 x 8-120-2157AB013.59AA07Cable Cruches2 x 8-120-234.510BB2338AS2Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/8
-Posterior
-(A)
-1Cybex Leg Press Machine72 x 6-80-29010AA212010AA22Lat Pulldown Wide Grip Machine2-22 x 8-120-210011AA11009AA03Prime Kilso Upper Back Machine3-63 x 8-120-230-459AB130-42.59AB020-359AA14Cable Triceps Overhead462 x 8-120-22412BA125.56AA0اول جلسه كنت العب على ارتفاع 52 وماكنت احس بأفضل استطالة وبالثانية عدلته على 465Single Lat Pulldown Machine7-32 x 8-120-2609AA15512SS16Seated Cable Triceps Pushdown302 x 8-120-22112AA02110AA0اللفل حق الكيبل كان انزل من العاده بخمس تكات7Stand Calve Raises Machine2 x 8-120-2739AA1649BA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/9
-Full Body
-1Shoulder Press Machine2 x 6-80-2708AA1708AA02Hip Thrust Machine2 x 6-80-21608BB11608AA13Facing Away Biceps Curl9-C2 x 8-120-23612AA23611AA14Reverse Fly Machine5-12 x 8-120-23611AA03611AA05Adductor Machine2 x 8-120-2809AA1808AA06Hyper Extension Machine42 x 8-120-27710AA17710AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/12
-DAY
-1
-1Cybex Leg Press Machine72 x 8-103908AA49010AA32High Incline Dumbbell Bench Press453 x 8-10322.57AB1207AA3209AA13Rear Delt Fly Machine53 x 10-1223517AB25013AA25510AB2اخر جلستين الوزن ممتاز بس جالس يدخل التراي4Facing Away Cable Biceps Curl9-C3 x 10-1223610AB23610AA23611AA1اخر جلسة جربت بدل 9 انزل الLevel الى 10 وكان افضل واعتمدته5Cable Cruches3 x 10-1223012AA33311BA23311AA2الجلسة الاولى كانت نفس الزاويه المعتاده اني اكون بعيد ولكن بالثانيه والاخيره قربت من الكيبل ف التحميل صار افضل وبعتمدهDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/13
-DAY
-2
-1Hammer Strength Wide Grip Row3 x 8-103608AA3609AA2608AA1الجهاز ما ناسبني وما هو بنفس الفيديو، وأفضل جهاز برايم للظهر العلوي. من عيوبه يؤلم مفاصل اليد والتحميل كله على الكتف والسواعد وشيل وتركيب الأوزان متعب جداً.2Lat Pulldown Wide Grip Machine2-23 x 8-103958AA3909AA2908AA1غيرت التكنيك بالجلسة الثانية ورجعت ورى وحسيت بالحمل على الباي أكثر، لكن الفورم الأول كان التحميل كامل على اللاتس وهو الأفضل، ورجعت له في الجلسة الثالثة.3Lateral Raise Machine5-23 x 10-1222910AA22911AA12911AA1أول جلسة كان الكرسي نازل بمستوى (1 - 2)، وباقي الجلسات رفعته إلى (5 - 2).4Seated Hamstring Curl Machine10-D3 x 8-1021157AA21109AA21107AA15Cable Triceps Overhead463 x 10-12222.510AA222.57BA11813AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/15
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-1032010AA3209AA32011AA12Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-123806AB1608AA1الجلسة الاولى مسكة ضيقة حسيت بالصدر العلوي اكثر والثانيه كانت واسعة وحسيت بدري المستوي اكثر واستطاله اكبر بسبب وسع المسكة. مالقيت hammer strength لقيت straive نفس الوظيفه وحطيت الوزن بالنص3Prime Leg Extension Machine6-33 x 10-12220-607SA320-607AA220-609AA14Preacher Curl Machine63 x 10-12222.511AS0209AA1209AA15 Calf Raises On Cybex Leg Press Machine53 x 6-1028010AA2809AA28012AA2التمرين ذا افضّل العبه رجل منفرده وبدون شوز لان سبق انكسرت رجلي ف فيه عدم توازن يوم العب رجلين (لكن بشكل عام حاليًا العبه برجلين مع بعض)Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/16
-DAY
-4
-1Upper back pulldown63 x 8-103758AA2709AA1708AA1اخر جلسه حطيت باد فوق ركبتي مع مثبت الجهاز عطاني ثبات افضل لان الكرسي مقدر ارفعه لتقليص القاب2Low Row Single Grip2 x 8-103368AA1367AA13Adductor Machine2 x 8-102808AA27011AA14Standed Cable Triceps Pushdown3 x 10-122258AB1208BA12010SS1نسيت الجلسه الثالثه لعبتها يوم خلصت كل تماريني5Cable Pallof Press2 x 8-10210.512AC310.515AB3جالس احس بصدري بالجلسه الاولى ارتفاع 50 الجلسه الثانيه نزلت الكيبل تكتين 48 وحسيت بالكور اكثر بس باقي احس ماضبطت التكنيك التفعيل للكور قليل وما ادري ليه بس باليسار احس بالتفعيل اكثرDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/17
-DAY
-5
-1Romanian Deadlift (Barbell)3 x 6-84707AA4706AA4707AA3افضّل العب البار المتعرج في الجهاز لسببين البار المستقيم يخلي اسفل رقبتي باليمين تلتهب وهي مشكله مزمنه التهابها عندي والثاني شيل الاوزان وحطها اسهل وتحكم افضل بالجهاز2Iliac Lat Pulldown63 x 8-103708AA2659AA2658AA1افضل السنقل جهاز Nautlus معطيني ثبات افضل واللاتس اليسار عندي اضعف فيه عدم توازن يوم اسحب بيدين3Chest Fly Machine23 x 10-1235011AA45510AA1558AA2احس بصدري زين بس احس بالباي بعد4Single Cable Latrial Raises163 x 10-1227.510AA27.510AA27.510AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/19
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1031109AA311011AA12High Incline Dumbbell Bench Press453 x 8-103209AB3209AB1208AA13Rear Delt Fly Machine33 x 10-1226010AA2609AB2607AB1الجلسه الثانيه شدت علي رجلي عشان كذا خرب التكنيك4Facing Away Cable Biceps Curl10-C3 x 10-122439AA34310AA2438AA25Cable Cruches3 x 10-1223312AA23310AA23310AA2ملاحظة المدرب هي اعتماد التكنيك من الجلسه الثانيه وهي اني اقرب من الكيبل بحيث اكون بمحاذاة الحمل عامودياDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/21
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10330-407AA225-359AA225-358AA2ملاحظة المدرب بعد طلبي بتغيير الجهاز الى Prime Upper Back Machine والوزن 60% فوق و 40% بالنص. اخر جلسه جربت انزل الكرسي الى 5 بس حسيت بكتمه اكثر2Lat Pulldown Wide Grip Machine2-23 x 8-103909AA2908AA2859AA2ملاحظة المدرب هي الاستمرار على نفس تكنيكي المعتاد وهو ارجع ظهري شوي واقدم حلستي من الجهاز شوي3Lateral Raise Machine5-23 x 10-12231.511AA131.59AA12910AA14Seated Hamstring Curl Machine10-D3 x 8-10211010AA11109AA21109AA25Cable Triceps Overhead463 x 10-12222.510AA222.510AA119.510AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/22
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-10322.510AA222.59AA222.59AA12Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-123707AA2707AA1ملاحظة المدرب اعتماد المسكة الواسعة مالم يتم تحميل اي الم عالكتف او المفاصل3Prime Leg Extension Machine6-33 x 10-12220-658AA220-658AA120-608AA1ملاحظة المدرب اعتماد البرايم بنفس توزيعة اوزاني وهي 80% فوق 20% بالنص4Preacher Curl Machine63 x 10-12229.54SB022.59AA122.58AA05Single Calf Raises On Cybex Leg Press Machine33 x 6-102709AA1609AA1608AA1ملاحظة المدرب رفع مستوى الكرسي لتجنب جهد مهدر بأول رفعه, وبناء على رغبتي العبها سنقل وبدون حذاء, هالمره نسيت باول جلستين افصخ الشوز وفصخته اخر جلسهDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/24
-DAY
-4
-1Upper back pulldown63 x 8-103857AB1758AA1759AA1اول جلستين كانت مسكه غير حقتي ومب مريحه2Low Row Single Grip2 x 8-103367AA1368AA1يدي اليمين اقوى بواجد باللاتس السفلية3Adductor Machine2 x 8-102808AA17011AA14Standed Cable Triceps Pushdown3 x 10-122258AA1209AA12011AA05Cable Pallof Press462 x 8-10210.59AB010.511AA1ملاحظة المدرب اعتماد التكنيك الثاني بارتفاع 48 وانه تمرين ثبات للكور وشعوره مب نفس التمارين العادية, لكن تقصته الى 46 وحسيت الحمل افضل بواجدDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/25
-DAY
-5
-1Romanian Deadlift (Barbell)3 x 6-84708AA5807AA4807AA3بعد طلبي المدرب وافقاني اغير البار للجهاز الاسبوع الجاي2Iliac Lat Pulldown63 x 8-1037010AA2758AB1758AA13Chest Fly Machine23 x 10-123609AA1608AA1608AA04Single Cable Latrial Raises163 x 10-1227.510AA17.510AA17.510AA1ملاحظة المدرب اني اثبت جسمي عن طريق اني امسك الجهاز باليد الثانية, المرات الجايه بحاول ابدا باليمين لانها اضعف بالكتف الجانبيDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/27
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1021109AA111010AA1-----الجلسه الاخيره لعبتها حافي وبعتمد الموضوع افضل2High Incline Dumbbell Bench Press453 x 8-10222.58AA122.58SA1209AA13Reverse Fly Machine5-13 x 10-122348AB12712AA12712AA0المدرب وافق اغير الجهاز لنفس اللي استعمله قبل اشترك4Facing Away Cable Biceps Curl10-C3 x 10-1224312AA14311AA1439AA15Cable Cruches3 x 10-1223312AA234.511AA134.510AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/28
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10230-42.57AB025-359AA125-358AA12Lat Pulldown Wide Grip Machine2-23 x 8-1029010AA0908AA1909AA03Lateral Raise Machine5-23 x 10-122414AA13110AA2319AA14Seated Hamstring Curl Machine10-D3 x 8-1021158AA21108AA11108AA15Cable Triceps Overhead463 x 10-12222.511AA122.57AA019.58AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/30
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-10222.510AA2258AA2258AA02Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-122707AA0607AA0-----3Prime Leg Extension Machine6-33 x 10-12220-608AA220-609AA120-607AA14Preacher Curl Machine63 x 10-1222711AA2279AA125.58AA15Single Calf Raises On Cybex Leg Press Machine53 x 6-102707AS0708AB05010AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR7/31
-DAY
-4
-1Romanian Deadlift (Machine)3 x 6-831607AA31606AA31606AA32Adductor Machine2 x 8-102807AA17012AA13Standed Cable Triceps Pushdown3 x 10-122258AA121.259AA221.259AA14Single Cable Latrial Raises163 x 10-1228.58AA17.511AA17.59AA1الجلسه الاولى حاط بليت ٢.٥ كيلو بس الكيبل صار مب ثابت ف ماتنفع الحركه5Cable Pallof Press462 x 8-10210.512AA210.515AS4الجلسة الثانيه اول مره العب التمرين صح بالعاده اشد القلوتس بس والبطن مرتخي ف الوزن يسحبني لكن هالمره شديت القلوتس وطلعت الهواء من بطني وشديت بطني وحسيت بتفعيل وثبات افضل بواجدDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/1
-DAY
-5
-1Upper back pulldown63 x 8-1027512AA17510AA1758AB02Low Row Single Grip2 x 8-102369AA2369AA03Iliac Lat Pulldown63 x 8-1027010AA2708AB1609AA14Chest Fly Machine23 x 10-1226011AA1609BB0559AA1الجلسة الثانية دخل كتفي شويDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/3
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1011208AA11108AA1-----2High Incline Dumbbell Bench Press453 x 8-10122.58AA1208AA1208AA03Reverse Fly Machine5-13 x 10-1213411AA13410AA131.512AA04Facing Away Cable Biceps Curl10-C3 x 10-1214312AA1439AA1348AA05Cable Cruches3 x 10-12134.512AA234.510AS134.59AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/4
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10130-408AA130-408AA125-357AA12Lat Pulldown Wide Grip Machine2-23 x 8-1019013AA1959AA0908AA03Lateral Raise Machine5-23 x 10-12138.512AA138.510AA0379AA04Seated Hamstring Curl Machine10-D3 x 8-1011159AA11157AA11109AA05Cable Triceps Overhead463 x 10-12122.59AA122.59AA019.510AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/5
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-101259AA1258AA1259AA02Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-121707AA15012AS03Prime Leg Extension Machine6-33 x 10-12120-658AA120-6010AA120-6010AA0الجلسه الثانيه كان السييت لفل ٣-٥4Preacher Curl Machine63 x 10-1212712AA1279AA022.511AA15Single Calf Raises On Cybex Leg Press Machine73 x 6-101709AA1708AA1708AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/7
-DAY
-4
-1Upper back pulldown63 x 8-1017512AA1759AA1702Low Row Single Grip2 x 8-101369AA1369AA13Adductor Machine2 x 8-101808AA17012AA14Standed Cable Triceps Pushdown3 x 10-121259AA021.2510AA0208AA05Cable Pallof Press462 x 8-101129AA1129AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/8
-DAY
-5
-1Romanian Deadlift (Machine)3 x 6-82ما اقدر العب التمرين بسبب الشد خلف الركبة وشد المأبضية2Iliac Lat Pulldown63 x 8-101759AA1758AA1709AA13Chest Fly Machine23 x 10-1216010AA1608AA15510AA14Single Cable Latrial Raises163 x 10-1217.512AA17.59AA1611AA1المرات الجايه بصير ابدا باليمين لان لاحظت انها اضعفDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/9
-DAY
-1
-1Cybex Leg Press Machine72 x 8-101مالعبته بسبب اصابة عضلة المأبضية2High Incline Dumbbell Bench Press453 x 8-10122.57AA1208AA1208AA13Reverse Fly Machine5-13 x 10-1213411AA13410AA12910AA14Facing Away Cable Biceps Curl10-C3 x 10-1214312AA0439AA13610AA05Stand Cable Cruches3 x 10-121358AB23012AA1309AA1سويته وانا واقف في جهاز كيبل اخر عشان اصابتي بالمأبضية, وبعتمد الواقف اثبت وافضلDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/10
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10330-408AA330-408AA230-408AA12Lat Pulldown Wide Grip Machine2-23 x 8-1031007AB1959AA1909AA23Cable Y-Raise10-B3 x 10-1221810AB31810AB2189AB14Seated Hamstring Curl Machine10-D3 x 8-102508AB5507AB5407BB5بسبب اصابة عضلة المأبضية جالس العب بأوزان خفيفه مره لين تستشفي5Cable Triceps Overhead463 x 10-12222.59AA1218AA019.58BA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/12
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-103256AA3256AA2257AA12Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-123608AA36010AA2-----3Prime Leg Extension Machine6-32 x 10-12220-4010AA420-408AA3-----سبب قل الاوزان اصابة الواني قاطع التمرين ومابي اضغط على العضلات والمفاصل4Hyper Extension Machine42 x 8-1026410AA4649AA2-----5Preacher Curl Machine63 x 10-1222710AA3279AA222.513AA16Single Calf Raises On Cybex Leg Press Machine32 x 6-1025012AB55010AB5-----الاوزان قليله بسبب الاصابه في المأبضيةDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/13
-DAY
-4
-1Upper back pulldown63 x 8-1037510AA3759AA2709AA22Low Row Single Grip2 x 8-10337.257AA1369AA1-----جهاز الكيبل مختلف اتوقع انه اثقل بتكه3Adductor Machine2 x 8-1026013AA36010AA2-----قللت اوزاني لان من زمان مالعبت ارجل وومابي تشد4Standed Cable Triceps Pushdown3 x 10-1222510AA021.2511AA021.259AA05Cable Pallof Press462 x 8-1021215AA313.57AA0-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/15
-DAY
-5
-1Hip Thrust Machine3 x 6-831507AA31507AA212010AA42Iliac Lat Pulldown63 x 8-103759AA1709AA1707AA23Chest Fly Machine23 x 10-1236010AA35510AA2559AA14Single Cable Latrial Raises163 x 10-1227.58AA168AA168AA1ما ادري ليش بس احسه ثقيل علي عكس العاده5Single Cuffed Cable Reverse Curl2 x 10-1221510AA2158AA2-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/16
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1031008AA41008AA3-----اوزاني قلت عشان ابي ارجع تدريجي فيها بعد الاصابه2Close Grip Shoulder Press Machine4.53 x 8-103208AA3208AA2207AA2مالقيت الا هذا الجهاز بالنادي اشبه له، عيبه المسكه سيئه جدًا للمعصم، وحاولت اضم الواح كتفي وابرز صدري شوي عشان ادخل الصدر العلوي وفعلًا حسيت فيه (ولكن احتري اعتماد المدرب هل صح فكرتي او لا) + طلبت من المدرب يشوف لي بديل او نرجع للسابق لو امكن3Dual Cable Reverse Fly3-C3 x 10-1221812AA31812AA31812AB3التمرين جيد واحس بالعضله بس لازم اتقنه اكثر عشان ما احس بالتراي4Facing Away Cable Biceps Curl10-C3 x 10-12244.2510AA244.2510AA144.258AA15Stand Cable Cruches3 x 10-122359AB33010AA2309AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/17
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10332.5-458AA132.5-457AA030-42.58AA02Lat Pulldown Wide Grip Machine2-23 x 8-1031007AA0958AA1957AA13Cable Y-Raise10-B3 x 10-122187AB21410AA21410AA2بالجلسه الاولى ماحميت وشد لوح كتفي اليسار من ما حلاني انقص الوزن لتجنب الاصابه4Seated Hamstring Curl Machine10-D2 x 8-1028010AA5808AA3حاولت اقلل الاوزان بعد الرجعه من الاصابه5Cable Triceps Overhead463 x 10-122249AA0246AA022.57AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/19
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-103259AA2257AA2257AA12Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-123659AA0658AA0-----3Prime Leg Extension Machine6-32 x 10-12220-509AA320-609AA2-----4Hyper Extension Machine42 x 8-102709AB2708AA0-----5Preacher Curl Machine63 x 10-12229.59AA129.57AA1277AA16Single Calf Raises On Cybex Leg Press Machine32 x 6-102609AA2608AA2-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/20
-DAY
-4
-1Upper back pulldown63 x 8-103808AA2807AA2759AA12Low Row Single Grip2 x 8-1033610AA0368AA1-----3Adductor Machine2 x 8-102709AA2708AA2-----4Standed Cable Triceps Pushdown3 x 10-1222510AB122.59AA122.59AA15Cable Pallof Press462 x 8-10213.59AA213.510AA2-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/22
-DAY
-5
-1Hip Thrust Machine3 x 6-831608AA21606AA31606AA22Iliac Lat Pulldown63 x 8-10376.259AA3808AA2859AA03Chest Fly Machine23 x 10-123709AA1708AA0659AA04Single Cable Latrial Raises163 x 10-12294AA08.756AA07.57AA05Single Cuffed Cable Reverse Curl2 x 10-12216.58AA0159AA0-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/23
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1031109AA21108AA2-----2Shoulder Press Machine3 x 8-103609AA1608AA2607AA13Dual Cable Reverse Fly3-C3 x 10-1222312AA22310AA22310AA14Facing Away Cable Biceps Curl10-C3 x 10-122508AA2509AA045.59AA15Stand Cable Cruches3 x 10-1223510AA2358AA23011AA1Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/24
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10332.5-459AA032.5-457SA130-42.58AA12Lat Pulldown Wide Grip Machine2-23 x 8-1031008AA0959AA0959AA13Cable Y-Raise10-B3 x 10-122188AA1189AA1149AA14Seated Hamstring Curl Machine10-D2 x 8-1021059AA31057AA2-----5Cable Triceps Overhead463 x 10-122249AA1247AA022.57AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/26
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-10327.58AB227.57AA1259AA02Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-1236510SA1659AA0-----3Prime Leg Extension Machine6-32 x 10-12220-709AA020-608AA1-----4Hyper Extension Machine42 x 8-1027010AA2709AA1-----5Preacher Curl Machine63 x 10-12229.511AA129.510AA0279AA16Single Calf Raises On Cybex Leg Press Machine32 x 6-1026010AA26010AA2-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/27
-DAY
-4
-1Upper back pulldown63 x 8-103808AA2807AA0758AA12Low Row Single Grip2 x 8-1033610AA1368AA1-----3Adductor Machine2 x 8-102808AA2808AA1-----4Standed Cable Triceps Pushdown3 x 10-1222511AA0258AA1258AA05Cable Pallof Press462 x 8-10213.512AA113.510AA2-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/28
-DAY
-5
-1Hip Thrust Machine3 x 6-83Skip
-2Iliac Lat Pulldown63 x 8-1033Chest Fly Machine23 x 10-1234Single Cable Latrial Raises163 x 10-1225Single Cuffed Cable Reverse Curl2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR8/31
-DAY
-1
-1Cybex Leg Press Machine72 x 8-1031207AA111010AA2-----2Shoulder Press Machine3 x 8-103708AA062.59AA062.55AA03Dual Cable Reverse Fly3-C3 x 10-1222713AA22711AA22712AA04Facing Away Cable Biceps Curl10-C3 x 10-12251.2511AA151.258AA145.510AA05Stand Cable Cruches3 x 10-1223512AA13510AA132.59AA0Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/1
-DAY
-2
-1Prime Upper Back Machine4-53 x 8-10335-47.58AA032.5-458AA132.5-457AA12Lat Pulldown Wide Grip Machine2-23 x 8-1031058AB110010AA01008AA03Cable Y-Raise10-B3 x 10-1221810AA11810AA1189AA14Seated Hamstring Curl Machine10-D2 x 8-1021207AA11109AA0-----5Cable Triceps Overhead443 x 10-12225.56AA025.56AA0249AA0لعبت على لفل 44 لان التحميل كان افضلDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/2
-DAY
-3
-1Low Incline Dumbbell Press153 x 8-10327.57AA027.55AS0259AA12Hammer Strength Horizontal Flat Bench Press (straive)2 x 10-123709AA1659AA0-----3Prime Leg Extension Machine6-32 x 10-12220-709AA120-6010AA1-----4Hyper Extension Machine42 x 8-1027012AA17011AA1-----5Preacher Curl Machine63 x 10-122349AA13110AA029.58AA06Dual Calf Raises Stand Machine32 x 6-102648AA2649AA1-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/5
-DAY
-4
-1Upper back pulldown63 x 8-103809AA2808AA2809AA02Low Row Single Grip2 x 8-10337.259AB137.258AA1-----3Adductor Machine2 x 8-102809AA2809AA1-----حسيت العضله مشدوده من الكوره4Standed Cable Triceps Pushdown3 x 10-12226.259AB12510AA0259AA05Cable Pallof Press462 x 8-102158AA2159AA1-----Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/4
-DAY
-5
-1Hip Thrust Machine3 x 6-83Skip
-2Iliac Lat Pulldown63 x 8-1033Chest Fly Machine23 x 10-1234Single Cable Latrial Raises163 x 10-1225Single Cuffed Cable Reverse Curl2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/8
-Upper
-1Mrgamass T-bar10-42 x 8-100-26010AB2609AB22Chest Press Machine (Leverage)8-B2 x 8-100-28010AA0808AA23Body Weight (65kg) Wide Pullups2 x 8-100-2159AA2208AA14Lateral Raise Machine5-22 x 10-120-23411AA031.512AA15Facing Away Cable Biceps Curl10-C2 x 8-100-2578AB052.58AA16Body Weight (65kg) Dips2 x 10-120-2011AA2010AA07Stand Cable Cruches2 x 10-120-23014AA13010AA18Body Weight (65kg) Close Pullups2 x 12-140-2014BA2012AA2Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/9
-Anterior
-(A)
-1Cybex Leg Press Machine72 x 8-1031209AA21108AA32Shoulder Press Machine2 x 8-1036510AA26510SA13Chest Fly Machine21 x 10-1237010AA24Dual Cable Reverse Fly3-C2 x 10-1222714AA43214AA25Facing Away Cable Biceps Curl10-C2 x 10-1225010AA14310AA16Stand Cable Cruches2 x 10-122سكبت التمرين لان بطني شاد عقب امس يوم جيت العبDate
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/11
-Posterior
-(A)
-1Prime Upper Back Machine4-52 x 8-1032Lat Pulldown Wide Grip Machine2-22 x 8-1033Cable Y-Raise10-B2 x 10-1224Seated Leg Curl10-D2 x 8-1025Cable Triceps Overhead442 x 10-1226Single Cuffed Cable Reverse Curl1 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/12
-Anterior
-(B)
-1Prime Machine Incline Chest Press3 x 8-1032Chest Press Machine (Leverage)8-B2 x 8-1033Prime Leg Extension Machine6-32 x 10-1224Hyper Extension Machine42 x 8-1025Preacher Curl Machine62 x 10-1226Single Calf Raises On Cybex Leg Press Machine32 x 6-102Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/13
-Posterior
-(B)
-1Upper back pulldown63 x 8-1032Low Row Single Grip2 x 8-1033Single Cable Latrial Raises162 x 10-1224Adductor Machine2 x 8-1025Hip Thrust Machine1 x 6-1036Standed Cable Triceps Pushdown2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/15
-Anterior
-(A)
-1Cybex Leg Press Machine72 x 8-1032Shoulder Press Machine2 x 8-1033Chest Fly Machine21 x 10-1234Dual Cable Reverse Fly3-C2 x 10-1225Facing Away Cable Biceps Curl10-C2 x 10-1226Stand Cable Cruches2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/16
-Posterior
-(A)
-1Prime Upper Back Machine4-52 x 8-1032Lat Pulldown Wide Grip Machine2-22 x 8-1033Cable Y-Raise10-B2 x 10-1224Seated Leg Curl10-D2 x 8-1025Cable Triceps Overhead442 x 10-1226Single Cuffed Cable Reverse Curl1 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/18
-Anterior
-(B)
-1Prime Machine Incline Chest Press3 x 8-1032Chest Press Machine (Leverage)8-B2 x 8-1033Prime Leg Extension Machine6-32 x 10-1224Hyper Extension Machine42 x 8-1025Preacher Curl Machine62 x 10-1226Single Calf Raises On Cybex Leg Press Machine32 x 6-102Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/19
-Posterior
-(B)
-1Upper back pulldown63 x 8-1032Low Row Single Grip2 x 8-1033Single Cable Latrial Raises162 x 10-1224Adductor Machine2 x 8-1025Hip Thrust Machine1 x 6-1036Standed Cable Triceps Pushdown2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/21
-Anterior
-(A)
-1Cybex Leg Press Machine72 x 8-1022Shoulder Press Machine2 x 8-1023Chest Fly Machine21 x 10-1224Dual Cable Reverse Fly3-C2 x 10-1225Facing Away Cable Biceps Curl10-C2 x 10-1226Stand Cable Cruches2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/22
-Posterior
-(A)
-1Prime Upper Back Machine4-52 x 8-1022Lat Pulldown Wide Grip Machine2-22 x 8-1023Cable Y-Raise10-B2 x 10-1224Seated Leg Curl10-D2 x 8-1025Cable Triceps Overhead442 x 10-1226Single Cuffed Cable Reverse Curl1 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/24
-Anterior
-(B)
-1Prime Machine Incline Chest Press3 x 8-1022Chest Press Machine (Leverage)8-B2 x 8-1023Prime Leg Extension Machine6-32 x 10-1224Hyper Extension Machine42 x 8-1025Preacher Curl Machine62 x 10-1226Single Calf Raises On Cybex Leg Press Machine32 x 6-102Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/25
-Posterior
-(B)
-1Upper back pulldown63 x 8-1022Low Row Single Grip2 x 8-1023Single Cable Latrial Raises162 x 10-1224Adductor Machine2 x 8-1025Hip Thrust Machine1 x 6-1026Standed Cable Triceps Pushdown2 x 10-122Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/27
-Anterior
-(A)
-1Cybex Leg Press Machine72 x 8-1012Shoulder Press Machine2 x 8-1013Chest Fly Machine21 x 10-1214Dual Cable Reverse Fly3-C2 x 10-1215Facing Away Cable Biceps Curl10-C2 x 10-1216Stand Cable Cruches2 x 10-121Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/28
-Posterior
-(A)
-1Prime Upper Back Machine4-52 x 8-1012Lat Pulldown Wide Grip Machine2-22 x 8-1013Cable Y-Raise10-B2 x 10-1214Seated Leg Curl10-D2 x 8-1015Cable Triceps Overhead442 x 10-1216Single Cuffed Cable Reverse Curl1 x 10-121Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR9/30
-Anterior
-(B)
-1Prime Machine Incline Chest Press3 x 8-1012Chest Press Machine (Leverage)8-B2 x 8-1013Prime Leg Extension Machine6-32 x 10-1214Hyper Extension Machine42 x 8-1015Preacher Curl Machine62 x 10-1216Single Calf Raises On Cybex Leg Press Machine32 x 6-101Date
-Workout
-N
-Exercise
-Seat
-Level
-S x R
-RIR
-Set 1Set 2Set 3Note
-KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR10/1
-Posterior
-(B)
-1Upper back pulldown63 x 8-1012Low Row Single Grip2 x 8-1013Single Cable Latrial Raises162 x 10-1214Adductor Machine2 x 8-1015Hip Thrust Machine1 x 6-1016Standed Cable Triceps Pushdown2 x 10-121`;
-
-  /* ---------------- APPLICATION STATE ---------------- */
+  /* ---------------- MASTER PROGRAM STATE ---------------- */
   let programWeeks = loadMasterProgram();
-  let currentWeekIdx = programWeeks.length - 1; // Default to latest week (Week 13)
+  let currentWeekIdx = getInitialActiveWeekIndex();
   let currentDayIdx = 0;
   let currentExerciseIdx = null;
   let currentSetIdx = 0;
-  let currentStep = 'WEIGHT'; // WEIGHT -> REPS -> RQ -> FR -> RIR -> NOTE
+  let currentStep = 'WEIGHT';
   
   let activeWeightStr = "";
   let activeWeightStr2 = "";
@@ -937,19 +209,44 @@ Posterior
     renderHomeScreen();
   };
 
-  /* ---------------- MASTER PARSER (SELF-CONTAINED INITIALIZER) ---------------- */
+  /* ---------------- AUTO-DETECT ACTIVE WEEK ON OPEN ---------------- */
+  function getInitialActiveWeekIndex() {
+    if (!programWeeks || programWeeks.length === 0) return 0;
+    
+    // Find the last week that has any activity (logged set or skip)
+    let lastActiveIdx = -1;
+    for (let w = 0; w < programWeeks.length; w++) {
+      let hasActivity = programWeeks[w].days.some(d => 
+        d.exercises.some(e => e.isSkipped || (e.sets && e.sets.some(s => s && s.kg && s.kg !== "-")))
+      );
+      if (hasActivity) lastActiveIdx = w;
+    }
+
+    if (lastActiveIdx === -1) return 0;
+
+    // Check if that week is 100% completed
+    let isCompleted = programWeeks[lastActiveIdx].days.every(d =>
+      d.exercises.length > 0 && d.exercises.every(e => e.isComplete || e.isSkipped)
+    );
+
+    if (isCompleted && lastActiveIdx + 1 < programWeeks.length) {
+      return lastActiveIdx + 1; // Open subsequent week automatically
+    }
+    return lastActiveIdx;
+  }
+
   function loadMasterProgram() {
-    let saved = localStorage.getItem('hajime_master_v2_data');
+    let saved = localStorage.getItem('hajime_master_v3_data');
     if (saved) {
       try { return JSON.parse(saved); } catch(e) {}
     }
-    let parsed = initScheduleFromRaw(SEED_HISTORY_DATA);
-    localStorage.setItem('hajime_master_v2_data', JSON.stringify(parsed));
+    let parsed = buildDefault13Weeks();
+    localStorage.setItem('hajime_master_v3_data', JSON.stringify(parsed));
     return parsed;
   }
 
   function saveState() {
-    localStorage.setItem('hajime_master_v2_data', JSON.stringify(programWeeks));
+    localStorage.setItem('hajime_master_v3_data', JSON.stringify(programWeeks));
   }
 
   function showToast(msg) {
@@ -959,158 +256,100 @@ Posterior
     setTimeout(() => { toast.style.display = 'none'; }, 2200);
   }
 
-  function initScheduleFromRaw(rawText) {
-    const headerPattern = /Date\s*\n\s*Workout\s*\n\s*N\s*\n\s*Exercise\s*\n\s*Seat\s*\n\s*Level\s*\n\s*S x R\s*\n\s*RIR\s*\n\s*Set 1Set 2Set 3Note\s*\n\s*KGRepsRQFRRIRKGRepsRQFRRIRKGRepsRQFRRIR/g;
-    let rawSections = rawText.split(headerPattern).map(s => s.trim()).filter(s => s.length > 0);
-    let parsedDays = [];
-
-    rawSections.forEach((sec) => {
-      let lines = sec.split('\n');
-      let date = lines[0].trim();
-      let wParts = [];
-      let bodyIdx = 1;
-      for (let i = 1; i < lines.length; i++) {
-        let l = lines[i].trim();
-        if (/^1[A-Za-z\u0600-\u06FF]/.test(l)) {
-          bodyIdx = i;
-          break;
-        }
-        wParts.push(l);
+  /* ---------------- BASE 13 WEEKS DATA BUILDER (TITLES CLEANED OF DATES) ---------------- */
+  function buildDefault13Weeks() {
+    // 4-Day Anterior/Posterior Template for current cycle
+    const fourDayTemplate = [
+      {
+        dayName: "Anterior (A)",
+        exercises: [
+          { name: "Cybex Leg Press Machine", seat: "7", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Shoulder Press Machine", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Chest Fly Machine", seat: "2", sxr: "1 x 10-12", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false },
+          { name: "Dual Cable Reverse Fly", seat: "3-C", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Facing Away Cable Biceps Curl", seat: "10-C", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Stand Cable Cruches", seat: "-", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false }
+        ]
+      },
+      {
+        dayName: "Posterior (A)",
+        exercises: [
+          { name: "Prime Upper Back Machine", seat: "4-5", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Lat Pulldown Wide Grip Machine", seat: "2-2", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Cable Y-Raise", seat: "10-B", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Seated Leg Curl", seat: "10-D", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Cable Triceps Overhead", seat: "44", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Single Cuffed Cable Reverse Curl", seat: "-", sxr: "1 x 10-12", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false }
+        ]
+      },
+      {
+        dayName: "Anterior (B)",
+        exercises: [
+          { name: "Prime Machine Incline Chest Press", seat: "-", sxr: "3 x 8-10", targetRir: "1", setsCount: 3, sets: [], note: "", isComplete: false },
+          { name: "Chest Press Machine (Leverage)", seat: "8-B", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Prime Leg Extension Machine", seat: "6-3", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Hyper Extension Machine", seat: "4", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Preacher Curl Machine", seat: "6", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Single Calf Raises On Cybex Leg Press Machine", seat: "3", sxr: "2 x 6-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false }
+        ]
+      },
+      {
+        dayName: "Posterior (B)",
+        exercises: [
+          { name: "Upper back pulldown", seat: "6", sxr: "3 x 8-10", targetRir: "1", setsCount: 3, sets: [], note: "", isComplete: false },
+          { name: "Low Row Single Grip", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Single Cable Latrial Raises", seat: "16", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Adductor Machine", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false },
+          { name: "Hip Thrust Machine", seat: "-", sxr: "1 x 6-10", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false },
+          { name: "Standed Cable Triceps Pushdown", seat: "-", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false }
+        ]
       }
-      let workoutName = wParts.join(' ').trim();
-      let bodyText = lines.slice(bodyIdx).join('\n').trim();
-
-      let currN = 1;
-      let rem = bodyText;
-      let rawExs = [];
-
-      while (true) {
-        let nextN = currN + 1;
-        let match = rem.match(new RegExp(nextN + '([A-Z][a-z]|[\u0600-\u06FF])'));
-        if (match) {
-          rawExs.push({ num: currN, chunk: rem.substring(0, match.index).trim() });
-          rem = rem.substring(match.index).trim();
-          currN = nextN;
-        } else {
-          rawExs.push({ num: currN, chunk: rem.trim() });
-          break;
-        }
-      }
-
-      let exercises = [];
-      rawExs.forEach(item => {
-        let chunk = item.chunk.replace(new RegExp('^' + item.num + '\\s*'), '');
-        if (!chunk) return;
-
-        let sxrMatch = chunk.match(/(\d\s*x\s*(?:[4-9]|1[0-5])(?:-(?:[4-9]|1[0-5]))?)(0-2|[0-4])?/);
-        if (!sxrMatch) {
-          exercises.push({
-            name: chunk, seat: '-', sxr: '3 x 8-10', targetRir: '2', setsCount: 3, sets: [], note: '', isComplete: false, isSkipped: false
-          });
-          return;
-        }
-
-        let sxrRaw = sxrMatch[1].replace(/\s+/g, '');
-        let sxr = sxrRaw.replace(/(\d)x([\d-]+)/, '$1 x $2');
-        let targetRir = sxrMatch[2] || "2";
-
-        let beforeSxr = chunk.substring(0, sxrMatch.index).trim();
-        let afterRir = chunk.substring(sxrMatch.index + sxrMatch[0].length).trim();
-
-        let seat = "-";
-        let exName = beforeSxr;
-        let seatMatch = beforeSxr.match(/(\d+-[A-Za-z\d]+|\d+\.\d+|\b\d{1,2})$/);
-        if (seatMatch) {
-          let candName = beforeSxr.substring(0, seatMatch.index).trim();
-          let candSeat = seatMatch[1].trim();
-          if (candName.length >= 3 && !candName.endsWith('x')) {
-            exName = candName;
-            seat = candSeat;
-          }
-        }
-
-        let setsCount = 3;
-        try { setsCount = parseInt(sxr.split('x')[0]); } catch(e) {}
-
-        let isSkipped = false;
-        let sets = [];
-        let note = "";
-
-        let lowerAfter = afterRir.toLowerCase();
-        if (lowerAfter.startsWith('skip') || afterRir.includes('سكبت') || afterRir.includes('مالعبته') || afterRir.includes('ما اقدر')) {
-          isSkipped = true;
-          note = afterRir;
-          for (let s = 0; s < setsCount; s++) {
-            sets.push({ kg: 'Skip', reps: 'Skip', rq: '-', fr: '-', rir: '-' });
-          }
-        } else {
-          let setRegex = /^(\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?)?)(\d{1,2})([SABC])([SABC])(\d)/;
-          let currS = afterRir;
-          for (let s = 0; s < setsCount; s++) {
-            let sm = currS.match(setRegex);
-            if (sm) {
-              sets.push({ kg: sm[1], reps: sm[2], rq: sm[3], fr: sm[4], rir: sm[5] });
-              currS = currS.substring(sm[0].length).trim();
-            } else {
-              break;
-            }
-          }
-          note = currS.trim();
-        }
-
-        let isComplete = (sets.length >= setsCount && setsCount > 0 && !isSkipped);
-
-        exercises.push({
-          name: exName, seat: seat, sxr: sxr, targetRir: targetRir, setsCount: setsCount, sets: sets, note: note,
-          isComplete: isComplete, isSkipped: isSkipped, isPrime: exName.toLowerCase().includes('prime')
-        });
-      });
-
-      parsedDays.push({ date: date, workout: workoutName, title: workoutName + ' (' + date + ')', exercises: exercises });
-    });
-
-    const groups = [
-      [0, 5, "Week 1 (7/3 - 7/9)"], [5, 10, "Week 2 (7/12 - 7/17)"], [10, 15, "Week 3 (7/19 - 7/25)"],
-      [15, 20, "Week 4 (7/27 - 8/1)"], [20, 25, "Week 5 (8/3 - 8/8)"], [25, 30, "Week 6 (8/9 - 8/15)"],
-      [30, 35, "Week 7 (8/16 - 8/22)"], [35, 40, "Week 8 (8/23 - 8/28)"], [40, 45, "Week 9 (8/31 - 9/5)"],
-      [45, 50, "Week 10 (9/8 - 9/13)"], [50, 54, "Week 11 (9/15 - 9/19)"], [54, 58, "Week 12 (9/21 - 9/25)"],
-      [58, 62, "Week 13 (9/27 - 10/1)"]
     ];
 
     let weeks = [];
-    groups.forEach((g, wIdx) => {
-      let days = [];
-      for (let k = g[0]; k < g[1]; k++) {
-        if (parsedDays[k]) days.push(parsedDays[k]);
-      }
-      weeks.push({ weekNum: wIdx + 1, label: g[2], days: days });
+    // Build 13 weeks structure
+    const labels = [
+      "Week 1 (7/3 - 7/9)", "Week 2 (7/12 - 7/17)", "Week 3 (7/19 - 7/25)", "Week 4 (7/27 - 8/1)",
+      "Week 5 (8/3 - 8/8)", "Week 6 (8/9 - 8/15)", "Week 7 (8/16 - 8/22)", "Week 8 (8/23 - 8/28)",
+      "Week 9 (8/31 - 9/5)", "Week 10 (9/8 - 9/13)", "Week 11 (9/15 - 9/19)", "Week 12 (9/21 - 9/25)",
+      "Week 13 (9/27 - 10/1)"
+    ];
+
+    labels.forEach((lbl, idx) => {
+      let clonedDays = JSON.parse(JSON.stringify(fourDayTemplate));
+      // Customize RIR based on week
+      let rirVal = idx === 12 ? "1" : (idx === 11 ? "2" : "3");
+      clonedDays.forEach(d => d.exercises.forEach(e => e.targetRir = rirVal));
+      weeks.push({
+        weekNum: idx + 1,
+        label: lbl,
+        days: clonedDays
+      });
     });
+
     return weeks;
   }
 
-  /* ---------------- NAVIGATION CONTROLLER ---------------- */
-  function setHeader(title, showBack = true, showHome = true, showArrows = false, showList = false, showCorners = true) {
+  /* ---------------- NAVIGATION ---------------- */
+  function setHeader(title, showBack = true, showHome = true, showArrows = false, showList = false) {
     document.getElementById('headerTitle').innerText = title.toUpperCase();
     document.getElementById('btnBack').style.visibility = showBack ? 'visible' : 'hidden';
     document.getElementById('btnHome').style.visibility = showHome ? 'visible' : 'hidden';
     document.getElementById('btnPrevStep').style.visibility = showArrows ? 'visible' : 'hidden';
     document.getElementById('btnNextStep').style.visibility = showArrows ? 'visible' : 'hidden';
     document.getElementById('btnList').style.visibility = showList ? 'visible' : 'hidden';
-    document.getElementById('btnExportTop').style.display = showCorners ? 'inline-flex' : 'none';
-    document.getElementById('btnImportTop').style.display = showCorners ? 'inline-flex' : 'none';
+    document.getElementById('btnAddWeek').style.display = (!showBack && !showHome) ? 'inline-block' : 'none';
   }
 
   function goHome() {
     currentExerciseIdx = null;
-    activeWeightStr = "";
-    activeWeightStr2 = "";
+    activeWeightStr = ""; activeWeightStr2 = "";
     renderHomeScreen();
   }
 
   function goList() {
     currentExerciseIdx = null;
-    activeWeightStr = "";
-    activeWeightStr2 = "";
+    activeWeightStr = ""; activeWeightStr2 = "";
     renderExerciseList();
   }
 
@@ -1164,9 +403,9 @@ Posterior
     }
   }
 
-  /* ---------------- SCREEN 1: HOME & WEEK SELECTOR ---------------- */
+  /* ---------------- SCREEN 1: HOME (WEEKS & DAYS) ---------------- */
   function renderHomeScreen() {
-    setHeader("HAJIME", false, false, false, false, true);
+    setHeader("HAJIME", false, false, false, false);
     const body = document.getElementById('appBody');
     const weekObj = programWeeks[currentWeekIdx];
 
@@ -1179,16 +418,17 @@ Posterior
       let exList = day.exercises || [];
       let doneCount = exList.filter(e => e.isComplete || e.isSkipped).length;
       let isDone = doneCount === exList.length && exList.length > 0;
-      let isPartial = !isDone && doneCount > 0;
-      let cardClass = isDone ? 'completed' : (isPartial ? 'partial' : '');
+      let cardClass = isDone ? 'completed' : '';
 
       return `
-        <div class="split-card ${cardClass}" onclick="selectDay(${dIdx})">
-          <div>
-            <div style="font-weight:800; font-size:16px; text-transform:uppercase;">${day.title}</div>
-            <div style="font-size:11px; color:#71717a; font-weight:700; margin-top:2px;">${exList.length} EXERCISES</div>
+        <div class="clean-ex-card ${cardClass}" onclick="selectDay(${dIdx})">
+          <div class="clean-ex-title">${day.dayName}</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-weight:900; font-size:14px; color:${isDone ? '#4ade80' : '#71717a'};">
+              ${doneCount}/${exList.length} ${isDone ? '✓' : ''}
+            </div>
+            <button class="action-pill" style="padding:6px 9px;" onclick="event.stopPropagation(); openDayExportModal(${dIdx});" title="Export this day">📋</button>
           </div>
-          <div style="font-weight:900; font-size:15px;">${doneCount} / ${exList.length} ${isDone ? '✓' : ''}</div>
         </div>
       `;
     }).join('');
@@ -1227,27 +467,24 @@ Posterior
     renderExerciseList();
   }
 
-  /* ---------------- SCREEN 2: EXERCISES LIST & SKIP DAY ---------------- */
+  /* ---------------- SCREEN 2: CLEAN EXERCISES LIST ---------------- */
   function renderExerciseList() {
     currentExerciseIdx = null;
     const day = programWeeks[currentWeekIdx].days[currentDayIdx];
-    setHeader(`${day.title}`, true, true, false, false, true);
+    setHeader(`${day.dayName}`, true, true, false, false);
     const body = document.getElementById('appBody');
 
     let exHtml = day.exercises.map((ex, idx) => {
       let isDone = ex.isComplete || ex.isSkipped;
-      let badge = ex.isSkipped ? '<span style="color:#f87171;">SKIP</span>' : (isDone ? '✓' : ex.sxr);
-      let cardClass = ex.isSkipped ? 'partial' : (isDone ? 'completed' : '');
+      let badge = ex.isSkipped ? '<span style="color:#f87171;">SKIP</span>' : (isDone ? '✓' : '');
+      let cardClass = ex.isSkipped ? 'skipped' : (isDone ? 'completed' : '');
 
       return `
-        <div class="split-card ${cardClass}" style="padding:12px 14px;" onclick="startExercise(${idx})">
-          <div style="flex:1;">
-            <div style="font-weight:800; font-size:14px; text-transform:uppercase;">${idx + 1}. ${ex.name}</div>
-            <div style="font-size:10px; color:#71717a; margin-top:2px;">SEAT: <b style="color:#f4f4f5;">${ex.seat || '-'}</b> • RIR: <b style="color:#eab308;">${ex.targetRir}</b></div>
-          </div>
+        <div class="clean-ex-card ${cardClass}" onclick="startExercise(${idx})">
+          <div class="clean-ex-title">${idx + 1}. ${ex.name}</div>
           <div style="display:flex; align-items:center; gap:8px;">
-            <div style="font-weight:800; font-size:13px;">${badge}</div>
-            <button class="icon-btn" style="padding:4px 7px;" onclick="event.stopPropagation(); openEditModal(${idx});">✏️</button>
+            <div style="font-weight:900; font-size:15px; color:#4ade80;">${badge}</div>
+            <button class="action-pill edit" style="padding:6px 9px;" onclick="event.stopPropagation(); openEditModal(${idx});">✏️</button>
           </div>
         </div>
       `;
@@ -1255,8 +492,11 @@ Posterior
 
     body.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-        <span style="font-size:11px; font-weight:800; color:#71717a; text-transform:uppercase;">EXERCISES (${day.exercises.length})</span>
-        <button class="icon-btn danger" onclick="skipEntireDay()">⏭ SKIP REMAINING DAY</button>
+        <span style="font-size:12px; font-weight:800; color:#71717a;">EXERCISES (${day.exercises.length})</span>
+        <div style="display:flex; gap:6px;">
+          <button class="action-pill" style="padding:5px 9px;" onclick="openDayExportModal(${currentDayIdx})">📋 EXPORT DAY</button>
+          <button class="action-pill danger" style="padding:5px 9px;" onclick="skipEntireDay()">⏭ SKIP DAY</button>
+        </div>
       </div>
       ${exHtml}
     `;
@@ -1278,16 +518,13 @@ Posterior
 
     currentSetIdx = resumeSetIdx;
     currentStep = 'WEIGHT';
-    activeWeightStr = "";
-    activeWeightStr2 = "";
-    activePrimePin = 1;
+    activeWeightStr = ""; activeWeightStr2 = ""; activePrimePin = 1;
     renderStep();
   }
 
-  /* ---------------- SMART PROGRESSION: PREVIOUS LOG ---------------- */
+  /* ---------------- PREVIOUS LOG ---------------- */
   function getPreviousLog(exName) {
     const target = exName.trim().toLowerCase();
-    // Search backward across all weeks
     for (let w = currentWeekIdx; w >= 0; w--) {
       let week = programWeeks[w];
       let maxDay = (w === currentWeekIdx) ? currentDayIdx - 1 : week.days.length - 1;
@@ -1296,7 +533,7 @@ Posterior
         for (let e = day.exercises.length - 1; e >= 0; e--) {
           let item = day.exercises[e];
           if (item.name.trim().toLowerCase() === target && !item.isSkipped && item.sets && item.sets.some(s => s.kg && s.kg !== "-" && s.kg !== "Skip")) {
-            return { date: day.date, sets: item.sets, note: item.note };
+            return { week: week.label, sets: item.sets, note: item.note };
           }
         }
       }
@@ -1324,7 +561,7 @@ Posterior
       return `
         <div class="summary-card">
           <div class="summary-title">LAST LOG</div>
-          <div style="font-size:11px; color:#52525b; text-align:center; font-weight:700; padding:4px 0;">NO PREVIOUS LOG FOUND</div>
+          <div style="font-size:11px; color:#52525b; text-align:center; font-weight:700; padding:2px 0;">NO PREVIOUS LOG FOUND</div>
         </div>
       `;
     }
@@ -1345,18 +582,18 @@ Posterior
 
     return `
       <div class="summary-card">
-        <div class="summary-title">PREVIOUS LOG (${prev.date})</div>
+        <div class="summary-title">PREVIOUS LOG (${prev.week.split(' ')[0]})</div>
         ${rowsHtml}
         ${prev.note ? `<div style="font-size:11px; color:#93c5fd; padding-top:2px;"><b>NOTE:</b> ${prev.note}</div>` : ''}
       </div>
     `;
   }
 
-  /* ---------------- SCREEN 3: HIGH-INTENSITY LOGGING STEPS ---------------- */
+  /* ---------------- SCREEN 3: LOGGING STEP ---------------- */
   function renderStep() {
     const day = programWeeks[currentWeekIdx].days[currentDayIdx];
     const ex = day.exercises[currentExerciseIdx];
-    setHeader(`${day.workout}`, true, true, true, true, false);
+    setHeader(`${day.dayName}`, true, true, true, true);
     const body = document.getElementById('appBody');
 
     const totalSets = ex.setsCount || 3;
@@ -1366,19 +603,18 @@ Posterior
     let pParts = prevWeight.toString().split('-');
     let p1 = pParts[0] || '0';
     let p2 = pParts[1] || p1;
-
     let repRange = ex.sxr.includes('x') ? ex.sxr.split('x')[1].trim() : ex.sxr;
 
     let headerHtml = `
-      <div class="card" style="padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div style="font-size:15px; font-weight:800; color:#fff; text-transform:uppercase; flex:1;">${ex.name}</div>
-          <div style="display:flex; gap:4px;">
-            <button class="icon-btn warning" onclick="clearCurrentSet()" title="تفريغ الجلسة الحالية">🧹 CLEAR</button>
-            <button class="icon-btn danger" onclick="skipCurrentSet()" title="سكيب للجلسة">⏭ SKIP SET</button>
-            <button class="icon-btn" onclick="openEditModal(${currentExerciseIdx})" title="تحرير التمرين">✏️ EDIT</button>
-          </div>
-        </div>
+      <div class="action-row">
+        <button class="action-pill warn" onclick="clearCurrentSet()">🧹 CLEAR</button>
+        <button class="action-pill danger" onclick="skipCurrentSet()">⏭ SKIP SET</button>
+        <button class="action-pill danger" onclick="skipEntireExercise()">⏭ SKIP EX</button>
+        <button class="action-pill edit" onclick="openEditModal(${currentExerciseIdx})">✏️ EDIT</button>
+      </div>
+
+      <div class="card" style="padding:12px; text-align:center;">
+        <div style="font-size:16px; font-weight:800; color:#fff; text-transform:uppercase;">${ex.name}</div>
       </div>
 
       <div class="grid-4">
@@ -1509,11 +745,9 @@ Posterior
     else if (currentStep === 'NOTE') {
       let existingNote = ex.note || "";
       body.innerHTML = `
+        ${headerHtml}
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="card-title">WORKOUT NOTES</div>
-            <button class="icon-btn danger" onclick="skipEntireExercise()">SKIP EXERCISE</button>
-          </div>
+          <div class="card-title">WORKOUT NOTES</div>
           <textarea id="noteInput" rows="5" oninput="instantSaveNote(this.value)" placeholder="Form feel, seat setup changes, etc..." style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:12px; border-radius:10px; font-size:14px; width:100%; resize:none;">${existingNote}</textarea>
           <button class="btn-primary" style="background:#22c55e; color:#000; margin-top:8px;" onclick="saveNoteFinish()">DONE EXERCISE ✓</button>
         </div>
@@ -1595,9 +829,7 @@ Posterior
     if (currentSetIdx + 1 < totalSets) {
       currentSetIdx++;
       currentStep = 'WEIGHT';
-      activeWeightStr = "";
-      activeWeightStr2 = "";
-      activePrimePin = 1;
+      activeWeightStr = ""; activeWeightStr2 = ""; activePrimePin = 1;
     } else {
       currentStep = 'NOTE';
     }
@@ -1626,22 +858,19 @@ Posterior
     if (!ex.sets[currentSetIdx]) ex.sets[currentSetIdx] = {};
   }
 
-  /* ---------------- RESET / CLEAR & SKIP ACTIONS ---------------- */
-  // 1. تفريغ الجلسة الحالية
+  /* ---------------- CLEAR & SKIP ACTIONS ---------------- */
   function clearCurrentSet() {
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[currentExerciseIdx];
     if (ex.sets && ex.sets[currentSetIdx]) {
       ex.sets[currentSetIdx] = { kg: '', reps: '', rq: '', fr: '', rir: '' };
     }
-    activeWeightStr = "";
-    activeWeightStr2 = "";
+    activeWeightStr = ""; activeWeightStr2 = "";
     currentStep = 'WEIGHT';
     saveState();
     renderStep();
     showToast("SET CLEARED 🧹");
   }
 
-  // 2. تسكيب الجلسة الحالية
   function skipCurrentSet() {
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[currentExerciseIdx];
     ensureSetObject();
@@ -1660,7 +889,6 @@ Posterior
     showToast("SET SKIPPED ⏭");
   }
 
-  // 3. تسكيب كامل التمرين
   function skipEntireExercise() {
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[currentExerciseIdx];
     const totalSets = ex.setsCount || 3;
@@ -1675,7 +903,6 @@ Posterior
     showToast("EXERCISE SKIPPED ⏭");
   }
 
-  // 4. تسكيب اليوم بالكامل مع بقاء الملاحظات
   function skipEntireDay() {
     if (!confirm("هل تود تسكيب جميع التمارين المتبقية لهذا اليوم مع الحفاظ على ملاحظاتك؟")) return;
     const day = programWeeks[currentWeekIdx].days[currentDayIdx];
@@ -1695,10 +922,11 @@ Posterior
     showToast("DAY SKIPPED ⏭");
   }
 
-  /* ---------------- EDIT EXERCISE MODAL ---------------- */
+  /* ---------------- EDIT EXERCISE & REORDER (N) ---------------- */
   function openEditModal(exIdx) {
     pendingEditExIdx = exIdx;
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[exIdx];
+    document.getElementById('editExOrder').value = exIdx + 1;
     document.getElementById('editExName').value = ex.name;
     document.getElementById('editExSeat').value = ex.seat || '-';
     document.getElementById('editExRir').value = ex.targetRir || '2';
@@ -1713,7 +941,15 @@ Posterior
 
   function saveExerciseEdit() {
     if (pendingEditExIdx === null) return;
-    const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[pendingEditExIdx];
+    const day = programWeeks[currentWeekIdx].days[currentDayIdx];
+    const ex = day.exercises[pendingEditExIdx];
+
+    let oldIdx = pendingEditExIdx;
+    let targetOrder = parseInt(document.getElementById('editExOrder').value);
+    if (isNaN(targetOrder) || targetOrder < 1) targetOrder = 1;
+    if (targetOrder > day.exercises.length) targetOrder = day.exercises.length;
+    let newIdx = targetOrder - 1;
+
     ex.name = document.getElementById('editExName').value.trim();
     ex.seat = document.getElementById('editExSeat').value.trim() || '-';
     ex.targetRir = document.getElementById('editExRir').value.trim() || '2';
@@ -1726,103 +962,143 @@ Posterior
     }
     ex.isPrime = ex.name.toLowerCase().includes('prime');
 
+    // Reorder if order changed
+    if (newIdx !== oldIdx) {
+      day.exercises.splice(oldIdx, 1);
+      day.exercises.splice(newIdx, 0, ex);
+      if (currentExerciseIdx !== null) currentExerciseIdx = newIdx;
+    }
+
     saveState();
     closeEditModal();
     if (currentExerciseIdx !== null) renderStep();
     else renderExerciseList();
-    showToast("EXERCISE UPDATED ✓");
+    showToast("SAVED & REORDERED ✓");
   }
 
-  /* ---------------- EXPORT TSV TO GOOGLE SHEETS ---------------- */
-  function generateTSV(scope) {
+  /* ---------------- EXPORT DAY FOR GOOGLE SHEETS (MERGED CELL SUPPORT) ---------------- */
+  let activeExportDayIdx = null;
+
+  function openDayExportModal(dIdx) {
+    activeExportDayIdx = dIdx;
+    const day = programWeeks[currentWeekIdx].days[dIdx];
+    document.getElementById('exportDayTitle').innerText = `EXPORT ${day.dayName.toUpperCase()}`;
+    document.getElementById('tsvDayPreview').value = buildSetsOnlyTSV(day);
+    document.getElementById('dayExportModal').style.display = 'flex';
+  }
+
+  function closeDayExportModal() {
+    document.getElementById('dayExportModal').style.display = 'none';
+    activeExportDayIdx = null;
+  }
+
+  // 1. Sets & Notes Only (Pasted straight from Col H / Set 1 without touching merged cols A..G)
+  function buildSetsOnlyTSV(day) {
     let rows = [];
-    // Column Header matching spreadsheet
-    rows.push("Date\tWorkout\tN\tExercise\tSeat Level\tS x R\tRIR\tSet 1 KG\tSet 1 Reps\tSet 1 RQ\tSet 1 FR\tSet 1 RIR\tSet 2 KG\tSet 2 Reps\tSet 2 RQ\tSet 2 FR\tSet 2 RIR\tSet 3 KG\tSet 3 Reps\tSet 3 RQ\tSet 3 FR\tSet 3 RIR\tNote");
-
-    let daysToExport = [];
-    if (scope === 'workout') {
-      daysToExport = [programWeeks[currentWeekIdx].days[currentDayIdx]];
-    } else if (scope === 'week') {
-      daysToExport = programWeeks[currentWeekIdx].days;
-    } else {
-      programWeeks.forEach(w => w.days.forEach(d => daysToExport.push(d)));
-    }
-
-    daysToExport.forEach(day => {
-      day.exercises.forEach((ex, idx) => {
-        let r = [day.date, day.workout, (idx + 1).toString(), ex.name, ex.seat || "-", ex.sxr, ex.targetRir];
-        let sets = ex.sets || [];
-        for (let s = 0; s < 3; s++) {
-          if (sets[s] && sets[s].kg) {
-            r.push(sets[s].kg);
-            r.push(sets[s].reps || "-");
-            r.push(sets[s].rq || "-");
-            r.push(sets[s].fr || "-");
-            r.push(sets[s].rir || "-");
-          } else {
-            r.push("-", "-", "-", "-", "-");
-          }
+    day.exercises.forEach(ex => {
+      let r = [];
+      let sets = ex.sets || [];
+      for (let s = 0; s < 3; s++) {
+        if (sets[s] && sets[s].kg) {
+          r.push(sets[s].kg);
+          r.push(sets[s].reps || "-");
+          r.push(sets[s].rq || "-");
+          r.push(sets[s].fr || "-");
+          r.push(sets[s].rir || "-");
+        } else {
+          r.push("-", "-", "-", "-", "-");
         }
-        r.push(ex.note || "");
-        rows.push(r.join('\t'));
-      });
+      }
+      r.push(ex.note || "");
+      rows.push(r.join('\t'));
     });
-
     return rows.join('\n');
   }
 
-  function openExportModal() {
-    let preview = generateTSV('workout');
-    document.getElementById('tsvExportPreview').value = preview;
-    document.getElementById('exportModal').style.display = 'flex';
-  }
-
-  function closeExportModal() {
-    document.getElementById('exportModal').style.display = 'none';
-  }
-
-  function copyWorkoutTSV(scope) {
-    let tsv = generateTSV(scope);
+  function copySetsOnly() {
+    if (activeExportDayIdx === null) return;
+    const day = programWeeks[currentWeekIdx].days[activeExportDayIdx];
+    let tsv = buildSetsOnlyTSV(day);
     navigator.clipboard.writeText(tsv).then(() => {
-      closeExportModal();
-      showToast("TSV COPIED TO CLIPBOARD ✓");
+      closeDayExportModal();
+      showToast("SETS & NOTES COPIED ✓ (PASTE AT SET 1)");
     }).catch(() => {
-      let area = document.getElementById('tsvExportPreview');
-      area.value = tsv;
-      area.select();
-      document.execCommand('copy');
-      closeExportModal();
-      showToast("TSV COPIED ✓");
+      let area = document.getElementById('tsvDayPreview');
+      area.value = tsv; area.select(); document.execCommand('copy');
+      closeDayExportModal();
+      showToast("COPIED ✓");
     });
   }
 
-  /* ---------------- IMPORT SCHEDULE ---------------- */
-  function openImportModal() {
-    document.getElementById('importModal').style.display = 'flex';
+  // 2. Full Day with Merged Structure (Date & Workout only on 1st row so paste preserves merges)
+  function copyFullDayMerged() {
+    if (activeExportDayIdx === null) return;
+    const day = programWeeks[currentWeekIdx].days[activeExportDayIdx];
+    let rows = [];
+    day.exercises.forEach((ex, idx) => {
+      let dateCell = (idx === 0) ? day.dayName : "";
+      let workoutCell = (idx === 0) ? day.dayName : "";
+      let r = [dateCell, workoutCell, (idx + 1).toString(), ex.name, ex.seat || "-", ex.sxr, ex.targetRir];
+      let sets = ex.sets || [];
+      for (let s = 0; s < 3; s++) {
+        if (sets[s] && sets[s].kg) {
+          r.push(sets[s].kg);
+          r.push(sets[s].reps || "-");
+          r.push(sets[s].rq || "-");
+          r.push(sets[s].fr || "-");
+          r.push(sets[s].rir || "-");
+        } else {
+          r.push("-", "-", "-", "-", "-");
+        }
+      }
+      r.push(ex.note || "");
+      rows.push(r.join('\t'));
+    });
+    let tsv = rows.join('\n');
+    navigator.clipboard.writeText(tsv).then(() => {
+      closeDayExportModal();
+      showToast("FULL DAY COPIED ✓");
+    });
   }
 
-  function closeImportModal() {
-    document.getElementById('importModal').style.display = 'none';
+  /* ---------------- ADD NEW WEEK MODAL ---------------- */
+  function openAddWeekModal() {
+    let nextNum = programWeeks.length + 1;
+    document.getElementById('newWeekLabel').value = `Week ${nextNum}`;
+    document.getElementById('addWeekModal').style.display = 'flex';
   }
 
-  function processScheduleImport() {
-    let text = document.getElementById('importTextInput').value;
-    if (!text || !text.trim()) {
-      closeImportModal();
-      return;
-    }
-    let parsed = initScheduleFromRaw(text);
-    if (!parsed || parsed.length === 0) {
-      alert("Could not parse schedule text. Check formatting.");
-      return;
-    }
-    programWeeks = parsed;
+  function closeAddWeekModal() {
+    document.getElementById('addWeekModal').style.display = 'none';
+  }
+
+  function createWeekFromLatest() {
+    let label = document.getElementById('newWeekLabel').value.trim();
+    if (!label) label = `Week ${programWeeks.length + 1}`;
+
+    // Clone days from latest week and reset logs
+    let lastWeek = programWeeks[programWeeks.length - 1];
+    let newDays = JSON.parse(JSON.stringify(lastWeek.days));
+    newDays.forEach(d => {
+      d.exercises.forEach(e => {
+        e.sets = [];
+        e.note = "";
+        e.isComplete = false;
+        e.isSkipped = false;
+      });
+    });
+
+    programWeeks.push({
+      weekNum: programWeeks.length + 1,
+      label: label,
+      days: newDays
+    });
+
     currentWeekIdx = programWeeks.length - 1;
-    currentDayIdx = 0;
     saveState();
-    closeImportModal();
+    closeAddWeekModal();
     renderHomeScreen();
-    showToast("SCHEDULE UPDATED SUCCESSFULLY ✓");
+    showToast("NEW WEEK CREATED ✓");
   }
 </script>
 </body>
