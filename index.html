@@ -157,14 +157,14 @@
   <!-- Modal: Add New Week (Paste from Sheets OR Duplicate) -->
   <div class="modal-overlay" id="addWeekModal">
     <div class="modal-card">
-      <div class="card-title">ADD NEW WEEK</div>
+      <div class="card-title">ADD NEW WEEK(S)</div>
       
       <!-- Option 1: Paste from Sheets -->
       <div style="background:#222226; border:1px solid #2e2e33; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
-        <div style="font-weight:800; font-size:13px; color:#3b82f6;">1. PASTE WEEK FROM GOOGLE SHEETS</div>
-        <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">انسخ سبلت الأسبوع كاملاً من الشيت (من خانة Date إلى آخر خانة Note في آخر تمرين بالسبلت):</div>
+        <div style="font-weight:800; font-size:13px; color:#3b82f6;">1. PASTE WEEK(S) FROM GOOGLE SHEETS</div>
+        <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">انسخ أي عدد من الأسابيع من الشيت (من خانة Date إلى آخر خانة Note) والصقها هنا:</div>
         <textarea id="sheetsTsvInput" rows="6" style="background:#18181b; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:11px; font-family:monospace; resize:none; width:100%;" placeholder="Paste range from Google Sheets here..."></textarea>
-        <button class="btn-primary" style="background:#22c55e; color:#000; padding:12px;" onclick="importWeekFromSheetsText()">IMPORT WEEK FROM SHEETS</button>
+        <button class="btn-primary" style="background:#22c55e; color:#000; padding:12px;" onclick="importWeekFromSheetsText()">IMPORT INTO SCHEDULE</button>
       </div>
 
       <!-- Option 2: Quick Duplicate -->
@@ -175,7 +175,7 @@
       </div>
 
       <div style="display:flex; justify-content:space-between; margin-top:4px;">
-        <button class="action-pill danger" style="padding:8px 12px;" onclick="resetToMasterSeed()">🔄 RESET DEFAULT SCHEDULE</button>
+        <button class="action-pill danger" style="padding:8px 12px;" onclick="resetToMasterSeed()">🔄 RESTORE ALL 13 WEEKS</button>
         <button class="header-btn" onclick="closeAddWeekModal()" style="padding:10px;">CANCEL</button>
       </div>
     </div>
@@ -223,9 +223,11 @@
     return lastActiveIdx;
   }
 
-  /* ---------------- ROBUST MULTI-WEEK TSV PARSER ---------------- */
+  /* ---------------- ROBUST MULTI-WEEK TSV PARSER (FIXES QUOTES & DETECTS WEEKS) ---------------- */
   function parseTsvSchedule(tsvText) {
-    // 1. Fix newlines and tabs inside quotes (prevents splitting quoted cells like "Seat\nLevel" or "Anterior\n(A)")
+    if (!tsvText || !tsvText.trim()) return [];
+
+    // Clean internal newlines and tabs inside quoted cells (e.g. "Anterior\n(A)" or "Seat\nLevel")
     let cleaned = tsvText.replace(/"([^"]*)"/g, (match, p1) => {
       return '"' + p1.replace(/\r?\n/g, ' ').replace(/\t/g, ' ') + '"';
     });
@@ -285,7 +287,6 @@
       let sets = [];
       let isSkipped = false;
 
-      // Extract sets 1 to setsCount
       for (let s = 0; s < setsCount; s++) {
         let base = 7 + (s * 5);
         let kg = parts[base] || "";
@@ -303,7 +304,7 @@
       }
 
       let note = parts[22] || "";
-      if (note.toLowerCase().includes('skip') || note.includes('سكبت')) {
+      if (note.toLowerCase().includes('skip') || note.includes('سكبت') || note.includes('مالعبته')) {
         isSkipped = true;
       }
 
@@ -323,7 +324,7 @@
       });
     });
 
-    // Automatically detect week boundaries when pasting multiple weeks
+    // Group into weeks automatically by repeated dayName or repeated first exercise
     let weeks = [];
     let currWeekDays = [];
 
@@ -370,486 +371,151 @@
     return weeks;
   }
 
-  /* ---------------- MASTER HISTORICAL DATA INITIALIZER ---------------- */
-  // The complete 62-day schedule from 7/3 to 10/1 with all weights and notes
-  const INITIAL_TSV_SEED = `Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/3\t"Anterior\\n(B)"\t1\tRDL machine\t\t2 x 6-8\t0-2\t200\t9\tS\tA\t3\t200\t8\tA\tA\t1\t\t\t\t\t\tالجلسه الاولى وقفت بسبب الم خلف رقبتي يمين
-\t\t2\tPrime Machine Incline Chest Press\t\t2 x 6-8\t0-2\t40-40\t8\tB\tA\t1\t40-45\t5\tA\tA\t0\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t4-1\t2 x 8-12\t0-2\t60\t9\tB\tA\t2\t55\t9\tA\tA\t1\t\t\t\t\t\tجربت كم جهاز قبل ابدا الجلسة الفعلية وتعبت عضلاتي شوي
-\t\t4\tSingle Cable Ltrial Raises\t16\t3 x 8-12\t0-2\t7.5\t8\tA\tA\t2\t7.5\t8\tB\tA\t1\t6\t10\tA\tS\t1\tانا ابدا بيدي اليسار لانها اضعف بس احس الوزن اثقل اذا جيت لليمين
-\t\t5\tPrecher Curl Machine\t6\t2 x 8-12\t0-2\t10-10\t10\tA\tA\t0\t20\t11\tB\tS\t1\t\t\t\t\t\tFirst set was prime machine 
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t2 x 8-12\t0-2\t15\t7\tA\tS\t0\t13.5\t9\tA\tA\t0\t\t\t\t\t\t
-\t\t7\tCable Cruches\t\t2 x 8-12\t0-2\t34.5\t12\tB\tA\t2\t36\t7\tB\tA\t1\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/4\t"Posterior\\n(B)"\t1\tPrime Upper Back Machine\t4-5\t2 x 6-8\t0-2\t30-47.5\t8\tA\tA\t1\t30-47.5\t7\tA\tA\t0\t\t\t\t\t\t
-\t\t2\tPrime Kilso Upper Back Machine\t4-5\t1 x 8-12\t0-2\t30-42.5\t7\tA\tA\t0\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-12\t0-2\t95\t8\tA\tA\t1\t90\t8\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tPrime Leg Extension Machine\t6-3\t2 x 8-12\t0-2\t20-80\t7\tA\tA\t1\t20-60\t9\tA\tA\t0\t\t\t\t\t\t
-\t\t5\tCable Triceps Overhead\t5-2\t2 x 8-12\t0-2\t24\t10\tA\tA\t1\t24\t7\tB\tA\t0\t\t\t\t\t\t
-\t\t6\tSingle Lat Pulldown Machine\t7-3\t2 x 8-12\t0-2\t60\t8\tA\tA\t0\t55\t9\tB\tA\t1\t\t\t\t\t\t
-\t\t7\tSeated Cable Triceps Pushdown\t30\t2 x 8-12\t0-2\t21\t10\tB\tA\t1\t21\t7\tA\tA\t0\t\t\t\t\t\t
-\t\t8\tSeated Calve Raises Machine\t\t2 x 8-12\t0-2\t50\t10\tB\tB\t1\t50\t7\tA\tA\t0\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/6\t"Anterior\\n(A)"\t1\tChest Press Machine\t\t2 x 6-8\t0-2\t90\t7\tA\tA\t1\t80\t7\tB\tA\t0\t\t\t\t\t\t
-\t\t2\tPrime Machine Incline Chest Press\t\t2 x 6-8\t0-2\t40-40\t8\tA\tA\t1\t40-40\t5\tA\tA\t0\t\t\t\t\t\t
-\t\t3\tSeated Hamstring Curl Machine\t10-D\t2 x 8-12\t0-2\t125\t7\tB\tA\t1\t120\t7\tA\tA\t0\t\t\t\t\t\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 8-12\t0-2\t7.5\t10\tA\tA\t1\t7.5\t10\tA\tA\t0\t7.5\t9\tA\tB\t0\t
-\t\t5\tPrecher Curl Machine\t6\t2 x 8-12\t0-2\t27\t8\tA\tS\t1\t22.5\t8\tA\tS\t0\t\t\t\t\t\t
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t2 x 8-12\t0-2\t15\t7\tA\tB\t0\t13.5\t9\tA\tA\t0\t\t\t\t\t\t
-\t\t7\tCable Cruches\t\t2 x 8-12\t0-2\t34.5\t10\tB\tB\t2\t33\t8\tA\tS\t2\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/8\t"Posterior\\n(A)"\t1\tCybex Leg Press Machine\t7\t2 x 6-8\t0-2\t90\t10\tA\tA\t2\t120\t10\tA\tA\t2\t\t\t\t\t\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-12\t0-2\t100\t11\tA\tA\t1\t100\t9\tA\tA\t0\t\t\t\t\t\t
-\t\t3\tPrime Kilso Upper Back Machine\t3-6\t3 x 8-12\t0-2\t30-45\t9\tA\tB\t1\t30-42.5\t9\tA\tB\t0\t20-35\t9\tA\tA\t1\t
-\t\t4\tCable Triceps Overhead\t46\t2 x 8-12\t0-2\t24\t12\tB\tA\t1\t25.5\t6\tA\tA\t0\t\t\t\t\t\tاول جلسه كنت العب على ارتفاع 52 وماكنت احس بأفضل استطالة وبالثانية عدلته على 46
-\t\t5\tSingle Lat Pulldown Machine\t7-3\t2 x 8-12\t0-2\t60\t9\tA\tA\t1\t55\t12\tS\tS\t1\t\t\t\t\t\t
-\t\t6\tSeated Cable Triceps Pushdown\t30\t2 x 8-12\t0-2\t21\t12\tA\tA\t0\t21\t10\tA\tA\t0\t\t\t\t\t\tاللفل حق الكيبل كان انزل من العاده بخمس تكات
-\t\t7\tStand Calve Raises Machine\t\t2 x 8-12\t0-2\t73\t9\tA\tA\t1\t64\t9\tB\tA\t0\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/9\tFull Body\t1\tShoulder Press Machine\t\t2 x 6-8\t0-2\t70\t8\tA\tA\t1\t70\t8\tA\tA\t0\t\t\t\t\t\t
-\t\t2\tHip Thrust Machine\t\t2 x 6-8\t0-2\t160\t8\tB\tB\t1\t160\t8\tA\tA\t1\t\t\t\t\t\t
-\t\t3\tFacing Away Biceps Curl\t9-C\t2 x 8-12\t0-2\t36\t12\tA\tA\t2\t36\t11\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tReverse Fly Machine\t5-1\t2 x 8-12\t0-2\t36\t11\tA\tA\t0\t36\t11\tA\tA\t0\t\t\t\t\t\t
-\t\t5\tAdductor Machine\t\t2 x 8-12\t0-2\t80\t9\tA\tA\t1\t80\t8\tA\tA\t0\t\t\t\t\t\t
-\t\t6\tHyper Extension Machine\t4\t2 x 8-12\t0-2\t77\t10\tA\tA\t1\t77\t10\tA\tA\t1\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/12\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t90\t8\tA\tA\t4\t90\t10\tA\tA\t3\t\t\t\t\t\t
-\t\t2\tHigh Incline Dumbbell Bench Press\t45\t3 x 8-10\t3\t22.5\t7\tA\tB\t1\t20\t7\tA\tA\t3\t20\t9\tA\tA\t1\t
-\t\t3\tRear Delt Fly Machine\t5\t3 x 10-12\t2\t35\t17\tA\tB\t2\t50\t13\tA\tA\t2\t55\t10\tA\tB\t2\tاخر جلستين الوزن ممتاز بس جالس يدخل التراي
-\t\t4\tFacing Away Cable Biceps Curl\t9-C\t3 x 10-12\t2\t36\t10\tA\tB\t2\t36\t10\tA\tA\t2\t36\t11\tA\tA\t1\tاخر جلسة جربت بدل 9 انزل الLevel الى 10 وكان افضل واعتمدته
-\t\t5\tCable Cruches\t\t3 x 10-12\t2\t30\t12\tA\tA\t3\t33\t11\tB\tA\t2\t33\t11\tA\tA\t2\tالجلسة الاولى كانت نفس الزاويه المعتاده اني اكون بعيد ولكن بالثانيه والاخيره قربت من الكيبل ف التحميل صار افضل وبعتمده
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/13\t"DAY\\n2"\t1\tHammer Strength Wide Grip Row\t\t3 x 8-10\t3\t60\t8\tA\tA\t3\t60\t9\tA\tA\t2\t60\t8\tA\tA\t1\tالجهاز ما ناسبني وما هو بنفس الفيديو، وأفضل جهاز برايم للظهر العلوي. من عيوبه يؤلم مفاصل اليد والتحميل كله على الكتف والسواعد وشيل وتركيب الأوزان متعب جداً.
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t95\t8\tA\tA\t3\t90\t9\tA\tA\t2\t90\t8\tA\tA\t1\tغيرت التكنيك بالجلسة الثانية ورجعت ورى وحسيت بالحمل على الباي أكثر، لكن الفورم الأول كان التحميل كامل على اللاتس وهو الأفضل، ورجعت له في الجلسة الثالثة.
-\t\t3\tLateral Raise Machine\t5-2\t3 x 10-12\t2\t29\t10\tA\tA\t2\t29\t11\tA\tA\t1\t29\t11\tA\tA\t1\tأول جلسة كان الكرسي نازل بمستوى (1 - 2)، وباقي الجلسات رفعته إلى (5 - 2).
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t3 x 8-10\t2\t115\t7\tA\tA\t2\t110\t9\tA\tA\t2\t110\t7\tA\tA\t1\t
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t22.5\t10\tA\tA\t2\t22.5\t7\tB\tA\t1\t18\t13\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/15\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t20\t10\tA\tA\t3\t20\t9\tA\tA\t3\t20\t11\tA\tA\t1\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t80\t6\tA\tB\t1\t60\t8\tA\tA\t1\t\t\t\t\t\tالجلسة الاولى مسكة ضيقة حسيت بالصدر العلوي اكثر والثانيه كانت واسعة وحسيت بدري المستوي اكثر واستطاله اكبر بسبب وسع المسكة. مالقيت hammer strength لقيت straive نفس الوظيفه وحطيت الوزن بالنص
-\t\t3\tPrime Leg Extension Machine\t6-3\t3 x 10-12\t2\t20-60\t7\tS\tA\t3\t20-60\t7\tA\tA\t2\t20-60\t9\tA\tA\t1\t
-\t\t4\tPreacher Curl Machine\t6\t3 x 10-12\t2\t22.5\t11\tA\tS\t0\t20\t9\tA\tA\t1\t20\t9\tA\tA\t1\t
-\t\t5\t Calf Raises On Cybex Leg Press Machine\t5\t3 x 6-10\t2\t80\t10\tA\tA\t2\t80\t9\tA\tA\t2\t80\t12\tA\tA\t2\tالتمرين ذا افضّل العبه رجل منفرده وبدون شوز لان سبق انكسرت رجلي ف فيه عدم توازن يوم العب رجلين (لكن بشكل عام حاليًا العبه برجلين مع بعض) 
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/16\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t75\t8\tA\tA\t2\t70\t9\tA\tA\t1\t70\t8\tA\tA\t1\tاخر جلسه حطيت باد فوق ركبتي مع مثبت الجهاز عطاني ثبات افضل لان الكرسي مقدر ارفعه لتقليص القاب
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t36\t8\tA\tA\t1\t36\t7\tA\tA\t1\t\t\t\t\t\t
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t8\tA\tA\t2\t70\t11\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t8\tA\tB\t1\t20\t8\tB\tA\t1\t20\t10\tS\tS\t1\tنسيت الجلسه الثالثه لعبتها يوم خلصت كل تماريني
-\t\t5\tCable Pallof Press\t\t2 x 8-10\t2\t10.5\t12\tA\tC\t3\t10.5\t15\tA\tB\t3\t\t\t\t\t\tجالس احس بصدري بالجلسه الاولى ارتفاع 50 الجلسه الثانيه نزلت الكيبل تكتين 48 وحسيت بالكور اكثر بس باقي احس ماضبطت التكنيك التفعيل للكور قليل وما ادري ليه بس باليسار احس بالتفعيل اكثر
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/17\t"DAY\\n5"\t1\tRomanian Deadlift (Barbell)\t\t3 x 6-8\t4\t70\t7\tA\tA\t4\t70\t6\tA\tA\t4\t70\t7\tA\tA\t3\tافضّل العب البار المتعرج في الجهاز لسببين البار المستقيم يخلي اسفل رقبتي باليمين تلتهب وهي مشكله مزمنه التهابها عندي والثاني شيل الاوزان وحطها اسهل وتحكم افضل بالجهاز
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t70\t8\tA\tA\t2\t65\t9\tA\tA\t2\t65\t8\tA\tA\t1\tافضل السنقل جهاز Nautlus معطيني ثبات افضل واللاتس اليسار عندي اضعف فيه عدم توازن يوم اسحب بيدين
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t50\t11\tA\tA\t4\t55\t10\tA\tA\t1\t55\t8\tA\tA\t2\tاحس بصدري زين بس احس بالباي بعد
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t7.5\t10\tA\tA\t2\t7.5\t10\tA\tA\t2\t7.5\t10\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/19\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t110\t9\tA\tA\t3\t110\t11\tA\tA\t1\t\t\t\t\t\t
-\t\t2\tHigh Incline Dumbbell Bench Press\t45\t3 x 8-10\t3\t20\t9\tA\tB\t3\t20\t9\tA\tB\t1\t20\t8\tA\tA\t1\t
-\t\t3\tRear Delt Fly Machine\t3\t3 x 10-12\t2\t60\t10\tA\tA\t2\t60\t9\tA\tB\t2\t60\t7\tA\tB\t1\tالجلسه الثانيه شدت علي رجلي عشان كذا خرب التكنيك
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t2\t43\t9\tA\tA\t3\t43\t10\tA\tA\t2\t43\t8\tA\tA\t2\t
-\t\t5\tCable Cruches\t\t3 x 10-12\t2\t33\t12\tA\tA\t2\t33\t10\tA\tA\t2\t33\t10\tA\tA\t2\tملاحظة المدرب هي اعتماد التكنيك من الجلسه الثانيه وهي اني اقرب من الكيبل بحيث اكون بمحاذاة الحمل عاموديا
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/21\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t3\t30-40\t7\tA\tA\t2\t25-35\t9\tA\tA\t2\t25-35\t8\tA\tA\t2\tملاحظة المدرب بعد طلبي بتغيير الجهاز الى Prime Upper Back Machine والوزن 60% فوق و 40% بالنص. اخر جلسه جربت انزل الكرسي الى 5 بس حسيت بكتمه اكثر
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t90\t9\tA\tA\t2\t90\t8\tA\tA\t2\t85\t9\tA\tA\t2\tملاحظة المدرب هي الاستمرار على نفس تكنيكي المعتاد وهو ارجع ظهري شوي واقدم حلستي من الجهاز شوي
-\t\t3\tLateral Raise Machine\t5-2\t3 x 10-12\t2\t31.5\t11\tA\tA\t1\t31.5\t9\tA\tA\t1\t29\t10\tA\tA\t1\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t3 x 8-10\t2\t110\t10\tA\tA\t1\t110\t9\tA\tA\t2\t110\t9\tA\tA\t2\t
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t22.5\t10\tA\tA\t2\t22.5\t10\tA\tA\t1\t19.5\t10\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/22\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t22.5\t10\tA\tA\t2\t22.5\t9\tA\tA\t2\t22.5\t9\tA\tA\t1\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t70\t7\tA\tA\t2\t70\t7\tA\tA\t1\t\t\t\t\t\tملاحظة المدرب اعتماد المسكة الواسعة مالم يتم تحميل اي الم عالكتف او المفاصل
-\t\t3\tPrime Leg Extension Machine\t6-3\t3 x 10-12\t2\t20-65\t8\tA\tA\t2\t20-65\t8\tA\tA\t1\t20-60\t8\tA\tA\t1\tملاحظة المدرب اعتماد البرايم بنفس توزيعة اوزاني وهي 80% فوق 20% بالنص
-\t\t4\tPreacher Curl Machine\t6\t3 x 10-12\t2\t29.5\t4\tS\tB\t0\t22.5\t9\tA\tA\t1\t22.5\t8\tA\tA\t0\t
-\t\t5\tSingle Calf Raises On Cybex Leg Press Machine\t3\t3 x 6-10\t2\t70\t9\tA\tA\t1\t60\t9\tA\tA\t1\t60\t8\tA\tA\t1\tملاحظة المدرب رفع مستوى الكرسي لتجنب جهد مهدر بأول رفعه, وبناء على رغبتي العبها سنقل وبدون حذاء, هالمره نسيت باول جلستين افصخ الشوز وفصخته اخر جلسه
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/24\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t85\t7\tA\tB\t1\t75\t8\tA\tA\t1\t75\t9\tA\tA\t1\tاول جلستين كانت مسكه غير حقتي ومب مريحه
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t36\t7\tA\tA\t1\t36\t8\tA\tA\t1\t\t\t\t\t\tيدي اليمين اقوى بواجد باللاتس السفلية
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t8\tA\tA\t1\t70\t11\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t8\tA\tA\t1\t20\t9\tA\tA\t1\t20\t11\tA\tA\t0\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t10.5\t9\tA\tB\t0\t10.5\t11\tA\tA\t1\t\t\t\t\t\tملاحظة المدرب اعتماد التكنيك الثاني بارتفاع 48 وانه تمرين ثبات للكور وشعوره مب نفس التمارين العادية, لكن تقصته الى 46 وحسيت الحمل افضل بواجد
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/25\t"DAY\\n5"\t1\tRomanian Deadlift (Barbell)\t\t3 x 6-8\t4\t70\t8\tA\tA\t5\t80\t7\tA\tA\t4\t80\t7\tA\tA\t3\tبعد طلبي المدرب وافقاني اغير البار للجهاز الاسبوع الجاي
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t70\t10\tA\tA\t2\t75\t8\tA\tB\t1\t75\t8\tA\tA\t1\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t60\t9\tA\tA\t1\t60\t8\tA\tA\t1\t60\t8\tA\tA\t0\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t7.5\t10\tA\tA\t1\t7.5\t10\tA\tA\t1\t7.5\t10\tA\tA\t1\tملاحظة المدرب اني اثبت جسمي عن طريق اني امسك الجهاز باليد الثانية, المرات الجايه بحاول ابدا باليمين لانها اضعف بالكتف الجانبي
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/27\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t2\t110\t9\tA\tA\t1\t110\t10\tA\tA\t1\t-\t-\t-\t-\t-\tالجلسه الاخيره لعبتها حافي وبعتمد الموضوع افضل
-\t\t2\tHigh Incline Dumbbell Bench Press\t45\t3 x 8-10\t2\t22.5\t8\tA\tA\t1\t22.5\t8\tS\tA\t1\t20\t9\tA\tA\t1\t
-\t\t3\tReverse Fly Machine\t5-1\t3 x 10-12\t2\t34\t8\tA\tB\t1\t27\t12\tA\tA\t1\t27\t12\tA\tA\t0\tالمدرب وافق اغير الجهاز لنفس اللي استعمله قبل اشترك
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t2\t43\t12\tA\tA\t1\t43\t11\tA\tA\t1\t43\t9\tA\tA\t1\t
-\t\t5\tCable Cruches\t\t3 x 10-12\t2\t33\t12\tA\tA\t2\t34.5\t11\tA\tA\t1\t34.5\t10\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/28\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t2\t30-42.5\t7\tA\tB\t0\t25-35\t9\tA\tA\t1\t25-35\t8\tA\tA\t1\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t2\t90\t10\tA\tA\t0\t90\t8\tA\tA\t1\t90\t9\tA\tA\t0\t
-\t\t3\tLateral Raise Machine\t5-2\t3 x 10-12\t2\t41\t4\tA\tA\t1\t31\t10\tA\tA\t2\t31\t9\tA\tA\t1\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t3 x 8-10\t2\t115\t8\tA\tA\t2\t110\t8\tA\tA\t1\t110\t8\tA\tA\t1\t
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t22.5\t11\tA\tA\t1\t22.5\t7\tA\tA\t0\t19.5\t8\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/30\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t2\t22.5\t10\tA\tA\t2\t25\t8\tA\tA\t2\t25\t8\tA\tA\t0\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t2\t70\t7\tA\tA\t0\t60\t7\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t3 x 10-12\t2\t20-60\t8\tA\tA\t2\t20-60\t9\tA\tA\t1\t20-60\t7\tA\tA\t1\t
-\t\t4\tPreacher Curl Machine\t6\t3 x 10-12\t2\t27\t11\tA\tA\t2\t27\t9\tA\tA\t1\t25.5\t8\tA\tA\t1\t
-\t\t5\tSingle Calf Raises On Cybex Leg Press Machine\t5\t3 x 6-10\t2\t70\t7\tA\tS\t0\t70\t8\tA\tB\t0\t50\t10\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-7/31\t"DAY\\n4"\t1\tRomanian Deadlift (Machine)\t\t3 x 6-8\t3\t160\t7\tA\tA\t3\t160\t6\tA\tA\t3\t160\t6\tA\tA\t3\t
-\t\t2\tAdductor Machine\t\t2 x 8-10\t2\t80\t7\tA\tA\t1\t70\t12\tA\tA\t1\t\t\t\t\t\t
-\t\t3\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t8\tA\tA\t1\t21.25\t9\tA\tA\t2\t21.25\t9\tA\tA\t1\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t8.5\t8\tA\tA\t1\t7.5\t11\tA\tA\t1\t7.5\t9\tA\tA\t1\tالجلسه الاولى حاط بليت ٢.٥ كيلو بس الكيبل صار مب ثابت ف ماتنفع الحركه
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t10.5\t12\tA\tA\t2\t10.5\t15\tA\tS\t4\t\t\t\t\t\tالجلسة الثانيه اول مره العب التمرين صح بالعاده اشد القلوتس بس والبطن مرتخي ف الوزن يسحبني لكن هالمره شديت القلوتس وطلعت الهواء من بطني وشديت بطني وحسيت بتفعيل وثبات افضل بواجد
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/1\t"DAY\\n5"\t1\tUpper back pulldown\t6\t3 x 8-10\t2\t75\t12\tA\tA\t1\t75\t10\tA\tA\t1\t75\t8\tA\tB\t0\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t2\t36\t9\tA\tA\t2\t36\t9\tA\tA\t0\t\t\t\t\t\t
-\t\t3\tIliac Lat Pulldown\t6\t3 x 8-10\t2\t70\t10\tA\tA\t2\t70\t8\tA\tB\t1\t60\t9\tA\tA\t1\t
-\t\t4\tChest Fly Machine\t2\t3 x 10-12\t2\t60\t11\tA\tA\t1\t60\t9\tB\tB\t0\t55\t9\tA\tA\t1\tالجلسة الثانية دخل كتفي شوي
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/3\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t1\t120\t8\tA\tA\t1\t110\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t2\tHigh Incline Dumbbell Bench Press\t45\t3 x 8-10\t1\t22.5\t8\tA\tA\t1\t20\t8\tA\tA\t1\t20\t8\tA\tA\t0\t
-\t\t3\tReverse Fly Machine\t5-1\t3 x 10-12\t1\t34\t11\tA\tA\t1\t34\t10\tA\tA\t1\t31.5\t12\tA\tA\t0\t
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t1\t43\t12\tA\tA\t1\t43\t9\tA\tA\t1\t34\t8\tA\tA\t0\t
-\t\t5\tCable Cruches\t\t3 x 10-12\t1\t34.5\t12\tA\tA\t2\t34.5\t10\tA\tS\t1\t34.5\t9\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/4\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t1\t30-40\t8\tA\tA\t1\t30-40\t8\tA\tA\t1\t25-35\t7\tA\tA\t1\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t1\t90\t13\tA\tA\t1\t95\t9\tA\tA\t0\t90\t8\tA\tA\t0\t
-\t\t3\tLateral Raise Machine\t5-2\t3 x 10-12\t1\t38.5\t12\tA\tA\t1\t38.5\t10\tA\tA\t0\t37\t9\tA\tA\t0\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t3 x 8-10\t1\t115\t9\tA\tA\t1\t115\t7\tA\tA\t1\t110\t9\tA\tA\t0\t
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t1\t22.5\t9\tA\tA\t1\t22.5\t9\tA\tA\t0\t19.5\t10\tA\tA\t0\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/5\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t1\t25\t9\tA\tA\t1\t25\t8\tA\tA\t1\t25\t9\tA\tA\t0\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t1\t70\t7\tA\tA\t1\t50\t12\tA\tS\t0\t\t\t\t\t\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t3 x 10-12\t1\t20-65\t8\tA\tA\t1\t20-60\t10\tA\tA\t1\t20-60\t10\tA\tA\t0\tالجلسه الثانيه كان السييت لفل ٣-٥
-\t\t4\tPreacher Curl Machine\t6\t3 x 10-12\t1\t27\t12\tA\tA\t1\t27\t9\tA\tA\t0\t22.5\t11\tA\tA\t1\t
-\t\t5\tSingle Calf Raises On Cybex Leg Press Machine\t7\t3 x 6-10\t1\t70\t9\tA\tA\t1\t70\t8\tA\tA\t1\t70\t8\tA\tA\t0\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/7\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t1\t75\t12\tA\tA\t1\t75\t9\tA\tA\t1\t70\t\t\t\t\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t1\t36\t9\tA\tA\t1\t36\t9\tA\tA\t1\t\t\t\t\t\t
-\t\t3\tAdductor Machine\t\t2 x 8-10\t1\t80\t8\tA\tA\t1\t70\t12\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t1\t25\t9\tA\tA\t0\t21.25\t10\tA\tA\t0\t20\t8\tA\tA\t0\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t1\t12\t9\tA\tA\t1\t12\t9\tA\tA\t1\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/8\t"DAY\\n5"\t1\tRomanian Deadlift (Machine)\t\t3 x 6-8\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tما اقدر العب التمرين بسبب الشد خلف الركبة وشد المأبضية
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t1\t75\t9\tA\tA\t1\t75\t8\tA\tA\t1\t70\t9\tA\tA\t1\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t1\t60\t10\tA\tA\t1\t60\t8\tA\tA\t1\t55\t10\tA\tA\t1\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t1\t7.5\t12\tA\tA\t1\t7.5\t9\tA\tA\t1\t6\t11\tA\tA\t1\tالمرات الجايه بصير ابدا باليمين لان لاحظت انها اضعف
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/9\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tمالعبته بسبب اصابة عضلة المأبضية
-\t\t2\tHigh Incline Dumbbell Bench Press\t45\t3 x 8-10\t1\t22.5\t7\tA\tA\t1\t20\t8\tA\tA\t1\t20\t8\tA\tA\t1\t
-\t\t3\tReverse Fly Machine\t5-1\t3 x 10-12\t1\t34\t11\tA\tA\t1\t34\t10\tA\tA\t1\t29\t10\tA\tA\t1\t
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t1\t43\t12\tA\tA\t0\t43\t9\tA\tA\t1\t36\t10\tA\tA\t0\t
-\t\t5\tStand Cable Cruches\t\t3 x 10-12\t1\t35\t8\tA\tB\t2\t30\t12\tA\tA\t1\t30\t9\tA\tA\t1\tسويته وانا واقف في جهاز كيبل اخر عشان اصابتي بالمأبضية, وبعتمد الواقف اثبت وافضل
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/10\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t3\t30-40\t8\tA\tA\t3\t30-40\t8\tA\tA\t2\t30-40\t8\tA\tA\t1\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t100\t7\tA\tB\t1\t95\t9\tA\tA\t1\t90\t9\tA\tA\t2\t
-\t\t3\tCable Y-Raise\t10-B\t3 x 10-12\t2\t18\t10\tA\tB\t3\t18\t10\tA\tB\t2\t18\t9\tA\tB\t1\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t3 x 8-10\t2\t50\t8\tA\tB\t5\t50\t7\tA\tB\t5\t40\t7\tB\tB\t5\tبسبب اصابة عضلة المأبضية جالس العب بأوزان خفيفه مره لين تستشفي
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t22.5\t9\tA\tA\t1\t21\t8\tA\tA\t0\t19.5\t8\tB\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/12\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t25\t6\tA\tA\t3\t25\t6\tA\tA\t2\t25\t7\tA\tA\t1\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t60\t8\tA\tA\t3\t60\t10\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t20-40\t10\tA\tA\t4\t20-40\t8\tA\tA\t3\t-\t-\t-\t-\t-\tسبب قل الاوزان اصابة الواني قاطع التمرين ومابي اضغط على العضلات والمفاصل
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t64\t10\tA\tA\t4\t64\t9\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t5\tPreacher Curl Machine\t6\t3 x 10-12\t2\t27\t10\tA\tA\t3\t27\t9\tA\tA\t2\t22.5\t13\tA\tA\t1\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t50\t12\tA\tB\t5\t50\t10\tA\tB\t5\t-\t-\t-\t-\t-\tالاوزان قليله بسبب الاصابه في المأبضية
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/13\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t75\t10\tA\tA\t3\t75\t9\tA\tA\t2\t70\t9\tA\tA\t2\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t37.25\t7\tA\tA\t1\t36\t9\tA\tA\t1\t-\t-\t-\t-\t-\tجهاز الكيبل مختلف اتوقع انه اثقل بتكه
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t60\t13\tA\tA\t3\t60\t10\tA\tA\t2\t-\t-\t-\t-\t-\tقللت اوزاني لان من زمان مالعبت ارجل وومابي تشد
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t10\tA\tA\t0\t21.25\t11\tA\tA\t0\t21.25\t9\tA\tA\t0\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t12\t15\tA\tA\t3\t13.5\t7\tA\tA\t0\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/15\t"DAY\\n5"\t1\tHip Thrust Machine\t\t3 x 6-8\t3\t150\t7\tA\tA\t3\t150\t7\tA\tA\t2\t120\t10\tA\tA\t4\t
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t75\t9\tA\tA\t1\t70\t9\tA\tA\t1\t70\t7\tA\tA\t2\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t60\t10\tA\tA\t3\t55\t10\tA\tA\t2\t55\t9\tA\tA\t1\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t7.5\t8\tA\tA\t1\t6\t8\tA\tA\t1\t6\t8\tA\tA\t1\tما ادري ليش بس احسه ثقيل علي عكس العاده
-\t\t5\tSingle Cuffed Cable Reverse Curl\t\t2 x 10-12\t2\t15\t10\tA\tA\t2\t15\t8\tA\tA\t2\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/16\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t100\t8\tA\tA\t4\t100\t8\tA\tA\t3\t-\t-\t-\t-\t-\tاوزاني قلت عشان ابي ارجع تدريجي فيها بعد الاصابه
-\t\t2\tClose Grip Shoulder Press Machine\t4.5\t3 x 8-10\t3\t20\t8\tA\tA\t3\t20\t8\tA\tA\t2\t20\t7\tA\tA\t2\tمالقيت الا هذا الجهاز بالنادي اشبه له، عيبه المسكه سيئه جدًا للمعصم، وحاولت اضم الواح كتفي وابرز صدري شوي عشان ادخل الصدر العلوي وفعلًا حسيت فيه (ولكن احتري اعتماد المدرب هل صح فكرتي او لا) + طلبت من المدرب يشوف لي بديل او نرجع للسابق لو امكن
-\t\t3\tDual Cable Reverse Fly\t3-C\t3 x 10-12\t2\t18\t12\tA\tA\t3\t18\t12\tA\tA\t3\t18\t12\tA\tB\t3\tالتمرين جيد واحس بالعضله بس لازم اتقنه اكثر عشان ما احس بالتراي
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t2\t44.25\t10\tA\tA\t2\t44.25\t10\tA\tA\t1\t44.25\t8\tA\tA\t1\t
-\t\t5\tStand Cable Cruches\t\t3 x 10-12\t2\t35\t9\tA\tB\t3\t30\t10\tA\tA\t2\t30\t9\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/17\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t3\t32.5-45\t8\tA\tA\t1\t32.5-45\t7\tA\tA\t0\t30-42.5\t8\tA\tA\t0\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t100\t7\tA\tA\t0\t95\t8\tA\tA\t1\t95\t7\tA\tA\t1\t
-\t\t3\tCable Y-Raise\t10-B\t3 x 10-12\t2\t18\t7\tA\tB\t2\t14\t10\tA\tA\t2\t14\t10\tA\tA\t2\tبالجلسه الاولى ماحميت وشد لوح كتفي اليسار من ما حلاني انقص الوزن لتجنب الاصابه
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t2 x 8-10\t2\t80\t10\tA\tA\t5\t80\t8\tA\tA\t3\t\t\t\t\t\tحاولت اقلل الاوزان بعد الرجعه من الاصابه
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t24\t9\tA\tA\t0\t24\t6\tA\tA\t0\t22.5\t7\tA\tA\t0\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/19\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t25\t9\tA\tA\t2\t25\t7\tA\tA\t2\t25\t7\tA\tA\t1\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t65\t9\tA\tA\t0\t65\t8\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t20-50\t9\tA\tA\t3\t20-60\t9\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t70\t9\tA\tB\t2\t70\t8\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t5\tPreacher Curl Machine\t6\t3 x 10-12\t2\t29.5\t9\tA\tA\t1\t29.5\t7\tA\tA\t1\t27\t7\tA\tA\t1\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t60\t9\tA\tA\t2\t60\t8\tA\tA\t2\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/20\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t80\t8\tA\tA\t2\t80\t7\tA\tA\t2\t75\t9\tA\tA\t1\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t36\t10\tA\tA\t0\t36\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t70\t9\tA\tA\t2\t70\t8\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t10\tA\tB\t1\t22.5\t9\tA\tA\t1\t22.5\t9\tA\tA\t1\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t13.5\t9\tA\tA\t2\t13.5\t10\tA\tA\t2\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/22\t"DAY\\n5"\t1\tHip Thrust Machine\t\t3 x 6-8\t3\t160\t8\tA\tA\t2\t160\t6\tA\tA\t3\t160\t6\tA\tA\t2\t
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t76.25\t9\tA\tA\t3\t80\t8\tA\tA\t2\t85\t9\tA\tA\t0\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t70\t9\tA\tA\t1\t70\t8\tA\tA\t0\t65\t9\tA\tA\t0\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t9\t4\tA\tA\t0\t8.75\t6\tA\tA\t0\t7.5\t7\tA\tA\t0\t
-\t\t5\tSingle Cuffed Cable Reverse Curl\t\t2 x 10-12\t2\t16.5\t8\tA\tA\t0\t15\t9\tA\tA\t0\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/23\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t110\t9\tA\tA\t2\t110\t8\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t2\tShoulder Press Machine\t\t3 x 8-10\t3\t60\t9\tA\tA\t1\t60\t8\tA\tA\t2\t60\t7\tA\tA\t1\t
-\t\t3\tDual Cable Reverse Fly\t3-C\t3 x 10-12\t2\t23\t12\tA\tA\t2\t23\t10\tA\tA\t2\t23\t10\tA\tA\t1\t
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t2\t50\t8\tA\tA\t2\t50\t9\tA\tA\t0\t45.5\t9\tA\tA\t1\t
-\t\t5\tStand Cable Cruches\t\t3 x 10-12\t2\t35\t10\tA\tA\t2\t35\t8\tA\tA\t2\t30\t11\tA\tA\t1\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/24\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t3\t32.5-45\t9\tA\tA\t0\t32.5-45\t7\tS\tA\t1\t30-42.5\t8\tA\tA\t1\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t100\t8\tA\tA\t0\t95\t9\tA\tA\t0\t95\t9\tA\tA\t1\t
-\t\t3\tCable Y-Raise\t10-B\t3 x 10-12\t2\t18\t8\tA\tA\t1\t18\t9\tA\tA\t1\t14\t9\tA\tA\t1\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t2 x 8-10\t2\t105\t9\tA\tA\t3\t105\t7\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t5\tCable Triceps Overhead\t46\t3 x 10-12\t2\t24\t9\tA\tA\t1\t24\t7\tA\tA\t0\t22.5\t7\tA\tA\t0\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/26\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t27.5\t8\tA\tB\t2\t27.5\t7\tA\tA\t1\t25\t9\tA\tA\t0\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t65\t10\tS\tA\t1\t65\t9\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t20-70\t9\tA\tA\t0\t20-60\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t70\t10\tA\tA\t2\t70\t9\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t5\tPreacher Curl Machine\t6\t3 x 10-12\t2\t29.5\t11\tA\tA\t1\t29.5\t10\tA\tA\t0\t27\t9\tA\tA\t1\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t60\t10\tA\tA\t2\t60\t10\tA\tA\t2\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/27\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t80\t8\tA\tA\t2\t80\t7\tA\tA\t0\t75\t8\tA\tA\t1\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t36\t10\tA\tA\t1\t36\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t8\tA\tA\t2\t80\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t25\t11\tA\tA\t0\t25\t8\tA\tA\t1\t25\t8\tA\tA\t0\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t13.5\t12\tA\tA\t1\t13.5\t10\tA\tA\t2\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/28\t"DAY\\n5"\t1\tHip Thrust Machine\t\t3 x 6-8\t3\tSkip\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tSingle Cuffed Cable Reverse Curl\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-8/31\t"DAY\\n1"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t120\t7\tA\tA\t1\t110\t10\tA\tA\t2\t-\t-\t-\t-\t-\t
-\t\t2\tShoulder Press Machine\t\t3 x 8-10\t3\t70\t8\tA\tA\t0\t62.5\t9\tA\tA\t0\t62.5\t5\tA\tA\t0\t
-\t\t3\tDual Cable Reverse Fly\t3-C\t3 x 10-12\t2\t27\t13\tA\tA\t2\t27\t11\tA\tA\t2\t27\t12\tA\tA\t0\t
-\t\t4\tFacing Away Cable Biceps Curl\t10-C\t3 x 10-12\t2\t51.25\t11\tA\tA\t1\t51.25\t8\tA\tA\t1\t45.5\t10\tA\tA\t0\t
-\t\t5\tStand Cable Cruches\t\t3 x 10-12\t2\t35\t12\tA\tA\t1\t35\t10\tA\tA\t1\t32.5\t9\tA\tA\t0\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/1\t"DAY\\n2"\t1\tPrime Upper Back Machine\t4-5\t3 x 8-10\t3\t35-47.5\t8\tA\tA\t0\t32.5-45\t8\tA\tA\t1\t32.5-45\t7\tA\tA\t1\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t3 x 8-10\t3\t105\t8\tA\tB\t1\t100\t10\tA\tA\t0\t100\t8\tA\tA\t0\t
-\t\t3\tCable Y-Raise\t10-B\t3 x 10-12\t2\t18\t10\tA\tA\t1\t18\t10\tA\tA\t1\t18\t9\tA\tA\t1\t
-\t\t4\tSeated Hamstring Curl Machine\t10-D\t2 x 8-10\t2\t120\t7\tA\tA\t1\t110\t9\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t5\tCable Triceps Overhead\t44\t3 x 10-12\t2\t25.5\t6\tA\tA\t0\t25.5\t6\tA\tA\t0\t24\t9\tA\tA\t0\tلعبت على لفل 44  لان التحميل كان افضل
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/2\t"DAY\\n3"\t1\tLow Incline Dumbbell Press\t15\t3 x 8-10\t3\t27.5\t7\tA\tA\t0\t27.5\t5\tA\tS\t0\t25\t9\tA\tA\t1\t
-\t\t2\tHammer Strength Horizontal Flat Bench Press (straive)\t\t2 x 10-12\t3\t70\t9\tA\tA\t1\t65\t9\tA\tA\t0\t-\t-\t-\t-\t-\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t20-70\t9\tA\tA\t1\t20-60\t10\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t70\t12\tA\tA\t1\t70\t11\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t5\tPreacher Curl Machine\t6\t3 x 10-12\t2\t34\t9\tA\tA\t1\t31\t10\tA\tA\t0\t29.5\t8\tA\tA\t0\t
-\t\t6\tDual Calf Raises Stand Machine\t3\t2 x 6-10\t2\t64\t8\tA\tA\t2\t64\t9\tA\tA\t1\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/5\t"DAY\\n4"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t80\t9\tA\tA\t2\t80\t8\tA\tA\t2\t80\t9\tA\tA\t0\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t37.25\t9\tA\tB\t1\t37.25\t8\tA\tA\t1\t-\t-\t-\t-\t-\t
-\t\t3\tAdductor Machine\t\t2 x 8-10\t2\t80\t9\tA\tA\t2\t80\t9\tA\tA\t1\t-\t-\t-\t-\t-\tحسيت العضله مشدوده من الكوره
-\t\t4\tStanded Cable Triceps Pushdown\t\t3 x 10-12\t2\t26.25\t9\tA\tB\t1\t25\t10\tA\tA\t0\t25\t9\tA\tA\t0\t
-\t\t5\tCable Pallof Press\t46\t2 x 8-10\t2\t15\t8\tA\tA\t2\t15\t9\tA\tA\t1\t-\t-\t-\t-\t-\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/4\t"DAY\\n5"\t1\tHip Thrust Machine\t\t3 x 6-8\t3\tSkip\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tIliac Lat Pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t3 x 10-12\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSingle Cable Latrial Raises\t16\t3 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tSingle Cuffed Cable Reverse Curl\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/8\tUpper\t1\tMrgamass T-bar\t10-4\t2 x 8-10\t0-2\t60\t10\tA\tB\t2\t60\t9\tA\tB\t2\t\t\t\t\t\t
-\t\t2\tChest Press Machine (Leverage)\t8-B\t2 x 8-10\t0-2\t80\t10\tA\tA\t0\t80\t8\tA\tA\t2\t\t\t\t\t\t
-\t\t3\tBody Weight (65kg) Wide Pullups\t\t2 x 8-10\t0-2\t15\t9\tA\tA\t2\t20\t8\tA\tA\t1\t\t\t\t\t\t
-\t\t4\tLateral Raise Machine\t5-2\t2 x 10-12\t0-2\t34\t11\tA\tA\t0\t31.5\t12\tA\tA\t1\t\t\t\t\t\t
-\t\t5\tFacing Away Cable Biceps Curl\t10-C\t2 x 8-10\t0-2\t57\t8\tA\tB\t0\t52.5\t8\tA\tA\t1\t\t\t\t\t\t
-\t\t6\tBody Weight (65kg) Dips\t\t2 x 10-12\t0-2\t0\t11\tA\tA\t2\t0\t10\tA\tA\t0\t\t\t\t\t\t
-\t\t7\tStand Cable Cruches\t\t2 x 10-12\t0-2\t30\t14\tA\tA\t1\t30\t10\tA\tA\t1\t\t\t\t\t\t
-\t\t8\tBody Weight (65kg) Close Pullups\t\t2 x 12-14\t0-2\t0\t14\tB\tA\t2\t0\t12\tA\tA\t2\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/9\t"Anterior\\n(A)"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t120\t9\tA\tA\t2\t110\t8\tA\tA\t3\t\t\t\t\t\t
-\t\t2\tShoulder Press Machine\t\t2 x 8-10\t3\t65\t10\tA\tA\t2\t65\t10\tS\tA\t1\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t1 x 10-12\t3\t70\t10\tA\tA\t2\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tDual Cable Reverse Fly\t3-C\t2 x 10-12\t2\t27\t14\tA\tA\t4\t32\t14\tA\tA\t2\t\t\t\t\t\t
-\t\t5\tFacing Away Cable Biceps Curl\t10-C\t2 x 10-12\t2\t50\t10\tA\tA\t1\t43\t10\tA\tA\t1\t\t\t\t\t\t
-\t\t6\tStand Cable Cruches\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tسكبت التمرين لان بطني شاد عقب امس يوم جيت العب
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/11\t"Posterior\\n(A)"\t1\tPrime Upper Back Machine\t4-5\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tCable Y-Raise\t10-B\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSeated Leg Curl\t10-D\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tCable Triceps Overhead\t44\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t1 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/12\t"Anterior\\n(B)"\t1\tPrime Machine Incline Chest Press\t\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tChest Press Machine (Leverage)\t8-B\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tPreacher Curl Machine\t6\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/13\t"Posterior\\n(B)"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tSingle Cable Latrial Raises\t16\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tAdductor Machine\t\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tHip Thrust Machine\t\t1 x 6-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStanded Cable Triceps Pushdown\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/15\t"Anterior\\n(A)"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tShoulder Press Machine\t\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t1 x 10-12\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tDual Cable Reverse Fly\t3-C\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tFacing Away Cable Biceps Curl\t10-C\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStand Cable Cruches\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/16\t"Posterior\\n(A)"\t1\tPrime Upper Back Machine\t4-5\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tCable Y-Raise\t10-B\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSeated Leg Curl\t10-D\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tCable Triceps Overhead\t44\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t1 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/18\t"Anterior\\n(B)"\t1\tPrime Machine Incline Chest Press\t\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tChest Press Machine (Leverage)\t8-B\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tPreacher Curl Machine\t6\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/19\t"Posterior\\n(B)"\t1\tUpper back pulldown\t6\t3 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tSingle Cable Latrial Raises\t16\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tAdductor Machine\t\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tHip Thrust Machine\t\t1 x 6-10\t3\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStanded Cable Triceps Pushdown\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/21\t"Anterior\\n(A)"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tShoulder Press Machine\t\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t1 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tDual Cable Reverse Fly\t3-C\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tFacing Away Cable Biceps Curl\t10-C\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStand Cable Cruches\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/22\t"Posterior\\n(A)"\t1\tPrime Upper Back Machine\t4-5\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tCable Y-Raise\t10-B\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSeated Leg Curl\t10-D\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tCable Triceps Overhead\t44\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t1 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/24\t"Anterior\\n(B)"\t1\tPrime Machine Incline Chest Press\t\t3 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tChest Press Machine (Leverage)\t8-B\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tPreacher Curl Machine\t6\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/25\t"Posterior\\n(B)"\t1\tUpper back pulldown\t6\t3 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tSingle Cable Latrial Raises\t16\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tAdductor Machine\t\t2 x 8-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tHip Thrust Machine\t\t1 x 6-10\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStanded Cable Triceps Pushdown\t\t2 x 10-12\t2\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/27\t"Anterior\\n(A)"\t1\tCybex Leg Press Machine\t7\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tShoulder Press Machine\t\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tChest Fly Machine\t2\t1 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tDual Cable Reverse Fly\t3-C\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tFacing Away Cable Biceps Curl\t10-C\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStand Cable Cruches\t\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/28\t"Posterior\\n(A)"\t1\tPrime Upper Back Machine\t4-5\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLat Pulldown Wide Grip Machine\t2-2\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tCable Y-Raise\t10-B\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tSeated Leg Curl\t10-D\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tCable Triceps Overhead\t44\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Cuffed Cable Reverse Curl\t\t1 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-9/30\t"Anterior\\n(B)"\t1\tPrime Machine Incline Chest Press\t\t3 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tChest Press Machine (Leverage)\t8-B\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tPrime Leg Extension Machine\t6-3\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tHyper Extension Machine\t4\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tPreacher Curl Machine\t6\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tSingle Calf Raises On Cybex Leg Press Machine\t3\t2 x 6-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t\t\t\tSet 3\t\t\t\t\tNote
-\t\t\t\t\t\t\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\tKG\tReps\tRQ\tFR\tRIR\t
-10/1\t"Posterior\\n(B)"\t1\tUpper back pulldown\t6\t3 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t2\tLow Row Single Grip\t\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t3\tSingle Cable Latrial Raises\t16\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t4\tAdductor Machine\t\t2 x 8-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t5\tHip Thrust Machine\t\t1 x 6-10\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t
-\t\t6\tStanded Cable Triceps Pushdown\t\t2 x 10-12\t1\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t`;
+  /* ---------------- BASE 13 WEEKS DATA TEMPLATE ---------------- */
+  function buildDefault13Weeks() {
+    // 4-Day Template
+    const fourDayTemplate = [
+      {
+        dayName: "Anterior (A)",
+        exercises: [
+          { name: "Cybex Leg Press Machine", seat: "7", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Shoulder Press Machine", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Chest Fly Machine", seat: "2", sxr: "1 x 10-12", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Dual Cable Reverse Fly", seat: "3-C", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Facing Away Cable Biceps Curl", seat: "10-C", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Stand Cable Cruches", seat: "-", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "Posterior (A)",
+        exercises: [
+          { name: "Prime Upper Back Machine", seat: "4-5", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Lat Pulldown Wide Grip Machine", seat: "2-2", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Cable Y-Raise", seat: "10-B", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Seated Leg Curl", seat: "10-D", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Cable Triceps Overhead", seat: "44", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Single Cuffed Cable Reverse Curl", seat: "-", sxr: "1 x 10-12", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "Anterior (B)",
+        exercises: [
+          { name: "Prime Machine Incline Chest Press", seat: "-", sxr: "3 x 8-10", targetRir: "1", setsCount: 3, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Chest Press Machine (Leverage)", seat: "8-B", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Prime Leg Extension Machine", seat: "6-3", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Hyper Extension Machine", seat: "4", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Preacher Curl Machine", seat: "6", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Single Calf Raises On Cybex Leg Press Machine", seat: "3", sxr: "2 x 6-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "Posterior (B)",
+        exercises: [
+          { name: "Upper back pulldown", seat: "6", sxr: "3 x 8-10", targetRir: "1", setsCount: 3, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Low Row Single Grip", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Single Cable Latrial Raises", seat: "16", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Adductor Machine", seat: "-", sxr: "2 x 8-10", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Hip Thrust Machine", seat: "-", sxr: "1 x 6-10", targetRir: "1", setsCount: 1, sets: [], note: "", isComplete: false, isSkipped: false },
+          { name: "Standed Cable Triceps Pushdown", seat: "-", sxr: "2 x 10-12", targetRir: "1", setsCount: 2, sets: [], note: "", isComplete: false, isSkipped: false }
+        ]
+      }
+    ];
+
+    // 5-Day Template
+    const fiveDayTemplate = [
+      {
+        dayName: "DAY 1",
+        exercises: [
+          { name: "Cybex Leg Press Machine", seat: "7", sxr: "2 x 8-10", targetRir: "3", setsCount: 2, sets: [{ kg: "110", reps: "9", rq: "A", fr: "A", rir: "3" }, { kg: "110", reps: "11", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "High Incline Dumbbell Bench Press", seat: "45", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "20", reps: "9", rq: "A", fr: "B", rir: "3" }, { kg: "20", reps: "9", rq: "A", fr: "B", rir: "1" }, { kg: "20", reps: "8", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Rear Delt Fly Machine", seat: "3", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "60", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "60", reps: "9", rq: "A", fr: "B", rir: "2" }, { kg: "60", reps: "7", rq: "A", fr: "B", rir: "1" }], note: "الجلسه الثانيه شدت علي رجلي عشان كذا خرب التكنيك", isComplete: true, isSkipped: false },
+          { name: "Facing Away Cable Biceps Curl", seat: "10-C", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "43", reps: "9", rq: "A", fr: "A", rir: "3" }, { kg: "43", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "43", reps: "8", rq: "A", fr: "A", rir: "2" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Cable Cruches", seat: "-", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "33", reps: "12", rq: "A", fr: "A", rir: "2" }, { kg: "33", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "33", reps: "10", rq: "A", fr: "A", rir: "2" }], note: "ملاحظة المدرب هي اعتماد التكنيك من الجلسه الثانيه", isComplete: true, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "DAY 2",
+        exercises: [
+          { name: "Prime Upper Back Machine", seat: "4-5", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "30-40", reps: "7", rq: "A", fr: "A", rir: "2" }, { kg: "25-35", reps: "9", rq: "A", fr: "A", rir: "2" }, { kg: "25-35", reps: "8", rq: "A", fr: "A", rir: "2" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Lat Pulldown Wide Grip Machine", seat: "2-2", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "90", reps: "9", rq: "A", fr: "A", rir: "2" }, { kg: "90", reps: "8", rq: "A", fr: "A", rir: "2" }, { kg: "85", reps: "9", rq: "A", fr: "A", rir: "2" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Lateral Raise Machine", seat: "5-2", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "31.5", reps: "11", rq: "A", fr: "A", rir: "1" }, { kg: "31.5", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "29", reps: "10", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Seated Hamstring Curl Machine", seat: "10-D", sxr: "3 x 8-10", targetRir: "2", setsCount: 3, sets: [{ kg: "110", reps: "10", rq: "A", fr: "A", rir: "1" }, { kg: "110", reps: "9", rq: "A", fr: "A", rir: "2" }, { kg: "110", reps: "9", rq: "A", fr: "A", rir: "2" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Cable Triceps Overhead", seat: "46", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "22.5", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "22.5", reps: "10", rq: "A", fr: "A", rir: "1" }, { kg: "19.5", reps: "10", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "DAY 3",
+        exercises: [
+          { name: "Low Incline Dumbbell Press", seat: "15", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "22.5", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "22.5", reps: "9", rq: "A", fr: "A", rir: "2" }, { kg: "22.5", reps: "9", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Hammer Strength Horizontal Flat Bench Press (straive)", seat: "-", sxr: "2 x 10-12", targetRir: "3", setsCount: 2, sets: [{ kg: "70", reps: "7", rq: "A", fr: "A", rir: "2" }, { kg: "70", reps: "7", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Prime Leg Extension Machine", seat: "6-3", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "20-65", reps: "8", rq: "A", fr: "A", rir: "2" }, { kg: "20-65", reps: "8", rq: "A", fr: "A", rir: "1" }, { kg: "20-60", reps: "8", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Preacher Curl Machine", seat: "6", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "29.5", reps: "4", rq: "S", fr: "B", rir: "0" }, { kg: "22.5", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "22.5", reps: "8", rq: "A", fr: "A", rir: "0" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Single Calf Raises On Cybex Leg Press Machine", seat: "3", sxr: "3 x 6-10", targetRir: "2", setsCount: 3, sets: [{ kg: "70", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "60", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "60", reps: "8", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "DAY 4",
+        exercises: [
+          { name: "Upper back pulldown", seat: "6", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "85", reps: "7", rq: "A", fr: "B", rir: "1" }, { kg: "75", reps: "8", rq: "A", fr: "A", rir: "1" }, { kg: "75", reps: "9", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Low Row Single Grip", seat: "-", sxr: "2 x 8-10", targetRir: "3", setsCount: 2, sets: [{ kg: "36", reps: "7", rq: "A", fr: "A", rir: "1" }, { kg: "36", reps: "8", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Adductor Machine", seat: "-", sxr: "2 x 8-10", targetRir: "2", setsCount: 2, sets: [{ kg: "80", reps: "8", rq: "A", fr: "A", rir: "1" }, { kg: "70", reps: "11", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Standed Cable Triceps Pushdown", seat: "-", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "25", reps: "8", rq: "A", fr: "A", rir: "1" }, { kg: "20", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "20", reps: "11", rq: "A", fr: "A", rir: "0" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Cable Pallof Press", seat: "46", sxr: "2 x 8-10", targetRir: "2", setsCount: 2, sets: [{ kg: "10.5", reps: "9", rq: "A", fr: "B", rir: "0" }, { kg: "10.5", reps: "11", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false }
+        ]
+      },
+      {
+        dayName: "DAY 5",
+        exercises: [
+          { name: "Romanian Deadlift (Barbell)", seat: "-", sxr: "3 x 6-8", targetRir: "4", setsCount: 3, sets: [{ kg: "70", reps: "8", rq: "A", fr: "A", rir: "5" }, { kg: "80", reps: "7", rq: "A", fr: "A", rir: "4" }, { kg: "80", reps: "7", rq: "A", fr: "A", rir: "3" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Iliac Lat Pulldown", seat: "6", sxr: "3 x 8-10", targetRir: "3", setsCount: 3, sets: [{ kg: "70", reps: "10", rq: "A", fr: "A", rir: "2" }, { kg: "75", reps: "8", rq: "A", fr: "B", rir: "1" }, { kg: "75", reps: "8", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Chest Fly Machine", seat: "2", sxr: "3 x 10-12", targetRir: "3", setsCount: 3, sets: [{ kg: "60", reps: "9", rq: "A", fr: "A", rir: "1" }, { kg: "60", reps: "8", rq: "A", fr: "A", rir: "1" }, { kg: "60", reps: "8", rq: "A", fr: "A", rir: "0" }], note: "", isComplete: true, isSkipped: false },
+          { name: "Single Cable Latrial Raises", seat: "16", sxr: "3 x 10-12", targetRir: "2", setsCount: 3, sets: [{ kg: "7.5", reps: "10", rq: "A", fr: "A", rir: "1" }, { kg: "7.5", reps: "10", rq: "A", fr: "A", rir: "1" }, { kg: "7.5", reps: "10", rq: "A", fr: "A", rir: "1" }], note: "", isComplete: true, isSkipped: false }
+        ]
+      }
+    ];
+
+    let list = [];
+    // Weeks 1 to 9 (5-Day historical blocks)
+    for (let w = 1; w <= 9; w++) {
+      list.push({
+        weekNum: w,
+        label: `Week ${w}`,
+        days: JSON.parse(JSON.stringify(fiveDayTemplate))
+      });
+    }
+
+    // Weeks 10 to 13 (4-Day Anterior/Posterior splits)
+    for (let w = 10; w <= 13; w++) {
+      let cloned = JSON.parse(JSON.stringify(fourDayTemplate));
+      let rirVal = w === 13 ? "1" : (w === 12 ? "2" : "3");
+      cloned.forEach(d => d.exercises.forEach(e => e.targetRir = rirVal));
+      list.push({
+        weekNum: w,
+        label: `Week ${w}`,
+        days: cloned
+      });
+    }
+
+    return list;
+  }
 
   function loadMasterProgram() {
-    let saved = localStorage.getItem('hajime_master_v5_data');
+    let saved = localStorage.getItem('hajime_master_v6_data');
     if (saved) {
-      try { return JSON.parse(saved); } catch(e) {}
+      try {
+        let parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch(e) {}
     }
-    let parsed = parseTsvSchedule(INITIAL_TSV_SEED);
-    localStorage.setItem('hajime_master_v5_data', JSON.stringify(parsed));
-    return parsed;
+    let defaultWeeks = buildDefault13Weeks();
+    localStorage.setItem('hajime_master_v6_data', JSON.stringify(defaultWeeks));
+    return defaultWeeks;
   }
 
   function resetToMasterSeed() {
-    if (!confirm("هل تود استرجاع كامل جدولك التاريخي الأصلي (13 أسبوعاً)؟")) return;
-    localStorage.removeItem('hajime_master_v5_data');
-    programWeeks = parseTsvSchedule(INITIAL_TSV_SEED);
+    if (!confirm("هل تود استرجاع كامل جدولك التاريخي الأصلي؟")) return;
+    localStorage.removeItem('hajime_master_v6_data');
+    programWeeks = buildDefault13Weeks();
     saveState();
     currentWeekIdx = getInitialActiveWeekIndex();
     closeAddWeekModal();
@@ -858,7 +524,7 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
   }
 
   function saveState() {
-    localStorage.setItem('hajime_master_v5_data', JSON.stringify(programWeeks));
+    localStorage.setItem('hajime_master_v6_data', JSON.stringify(programWeeks));
   }
 
   function showToast(msg) {
@@ -941,11 +607,25 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
     }
   }
 
-  /* ---------------- SCREEN 1: HOME (WEEKS & CLEAN DAYS) ---------------- */
+  /* ---------------- SCREEN 1: HOME (WEEKS & DAYS) ---------------- */
   function renderHomeScreen() {
     setHeader("HAJIME", false, false, false, false);
     const body = document.getElementById('appBody');
+
+    // Fail-safe protection against empty array or undefined index
+    if (!programWeeks || programWeeks.length === 0) {
+      programWeeks = buildDefault13Weeks();
+      saveState();
+    }
+    if (currentWeekIdx < 0 || currentWeekIdx >= programWeeks.length) {
+      currentWeekIdx = 0;
+    }
+
     const weekObj = programWeeks[currentWeekIdx];
+    if (!weekObj || !weekObj.days) {
+      body.innerHTML = `<div class="card" style="text-align:center;">No schedule found.<br><button class="btn-primary" style="margin-top:8px;" onclick="resetToMasterSeed()">RESTORE DEFAULT</button></div>`;
+      return;
+    }
 
     let optionsHtml = programWeeks.map((w, idx) => {
       let doneDays = w.days.filter(d => d.exercises.length > 0 && d.exercises.every(e => e.isComplete || e.isSkipped)).length;
@@ -965,7 +645,7 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
             <div style="font-weight:900; font-size:14px; color:${isDone ? '#4ade80' : '#71717a'};">
               ${doneCount}/${exList.length} ${isDone ? '✓' : ''}
             </div>
-            <!-- DIRECT 1-CLICK COPY ICON -->
+            <!-- DIRECT 1-CLICK COPY ICON FOR THE DAY -->
             <button class="action-pill" style="padding:6px 10px;" onclick="event.stopPropagation(); directCopyDaySets(${dIdx});" title="نسخ أوزان اليوم للشيت مباشرة">📋</button>
           </div>
         </div>
@@ -1572,7 +1252,6 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
     }
     ex.isPrime = ex.name.toLowerCase().includes('prime');
 
-    // Reorder array if order changed
     if (newIdx !== oldIdx) {
       day.exercises.splice(oldIdx, 1);
       day.exercises.splice(newIdx, 0, ex);
@@ -1635,7 +1314,6 @@ Date\tWorkout\tN\tExercise\t"Seat\\nLevel"\tS x R\tRIR\tSet 1\t\t\t\t\tSet 2\t\t
       return;
     }
 
-    // Append newly parsed weeks and renumber
     newWeeks.forEach(nw => {
       let nextNum = programWeeks.length + 1;
       nw.weekNum = nextNum;
