@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Hajime Tracker</title>
+  <title>Hajime Pro Tracker</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -88,7 +88,7 @@
     .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.88); display: none; justify-content: center; align-items: center; padding: 16px; z-index: 60; }
     .modal-card { background: #18181b; border: 1px solid #27272a; border-radius: 18px; padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 10px; max-height: 90vh; overflow-y: auto; }
 
-    .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; display: none; z-index: 100; box-shadow: 0 4px 15px rgba(34,197,94,0.4); }
+    .toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: #000; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; display: none; z-index: 100; box-shadow: 0 4px 15px rgba(34,197,94,0.4); text-align: center; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -111,7 +111,7 @@
   <!-- Main Body Content -->
   <div class="app-body" id="appBody"></div>
 
-  <!-- Toast Message -->
+  <!-- Toast Notification -->
   <div class="toast" id="toastMsg">COPIED TO CLIPBOARD ✓</div>
 
   <!-- Modal: Edit Exercise & Change Order (N) -->
@@ -143,6 +143,10 @@
         </div>
       </div>
 
+      <div id="unskipOptionContainer" style="display:none; padding:8px 0;">
+        <button class="action-pill warn" style="width:100%; padding:10px;" onclick="unskipCurrentExerciseFromModal()">REMOVE SKIP STATUS (إلغاء التسكيب)</button>
+      </div>
+
       <div style="display:flex; gap:8px; margin-top:6px;">
         <button class="btn-primary" onclick="saveExerciseEdit()">SAVE & REORDER</button>
         <button class="header-btn" onclick="closeEditModal()" style="padding:12px;">CANCEL</button>
@@ -150,49 +154,37 @@
     </div>
   </div>
 
-  <!-- Modal: Day Export to Sheets (Handles Merged Cells) -->
-  <div class="modal-overlay" id="dayExportModal">
-    <div class="modal-card">
-      <div class="card-title" id="exportDayTitle">EXPORT DAY TO SHEETS</div>
-      <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">اختر الطريقة المتوافقة مع جدولك:</div>
-
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <!-- Option 1: Copy Sets & Notes Only -->
-        <button class="btn-primary" style="background:#22c55e; color:#000; text-align:left; padding:12px;" onclick="copySetsOnly()">
-          <div style="font-weight:900;">1. نسخ الأوزان والجلسات فقط (موصى به للدمج)</div>
-          <div style="font-size:10px; opacity:0.8; margin-top:2px;">ينسخ من عامود Set 1 KG حتى Note فقط (الصقه مباشرة بأول خلية في Set 1 دون لمس التاريخ أو اسم التمرين).</div>
-        </button>
-
-        <!-- Option 2: Copy Full Day with Merged Structure -->
-        <button class="btn-primary" style="background:#27272a; border:1px solid #3f3f46; text-align:left; padding:12px;" onclick="copyFullDayMerged()">
-          <div style="font-weight:900;">2. نسخ اليوم كاملاً (من Date إلى Note)</div>
-          <div style="font-size:10px; opacity:0.8; margin-top:2px;">يضع التاريخ واسم التمرين بالسطر الأول فقط ويترك الباقي مفرغاً تماشياً مع الخلايا المدمجة.</div>
-        </button>
-      </div>
-
-      <textarea id="tsvDayPreview" rows="5" readonly style="background:#27272a; color:#a1a1aa; border:1px solid #3f3f46; padding:8px; border-radius:8px; font-size:10px; font-family:monospace; resize:none;"></textarea>
-      <button class="header-btn" onclick="closeDayExportModal()" style="padding:10px;">CLOSE</button>
-    </div>
-  </div>
-
-  <!-- Modal: Add / Update Single Week -->
+  <!-- Modal: Add New Week (Paste from Sheets OR Duplicate) -->
   <div class="modal-overlay" id="addWeekModal">
     <div class="modal-card">
       <div class="card-title">ADD NEW WEEK</div>
-      <div style="font-size:11px; color:#71717a;">Week Label & Dates (e.g. Week 14 (10/5 - 10/11)):</div>
-      <input type="text" id="newWeekLabel" placeholder="Week 14 (10/5 - 10/11)" style="background:#27272a; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:13px; width:100%;">
-
-      <div style="font-size:11px; color:#a1a1aa; margin-top:4px;">How would you like to create it?</div>
-      <div style="display:flex; flex-direction:column; gap:6px;">
-        <button class="btn-primary" style="background:#3b82f6;" onclick="createWeekFromLatest()">DUPLICATE LAST 4-DAY SPLIT</button>
+      
+      <!-- Option 1: Paste from Sheets -->
+      <div style="background:#222226; border:1px solid #2e2e33; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-weight:800; font-size:13px; color:#3b82f6;">1. PASTE WEEK FROM GOOGLE SHEETS</div>
+        <div style="font-size:11px; color:#a1a1aa; line-height:1.4;">انسخ سبلت الأسبوع كاملاً من الشيت (من خانة Date إلى آخر خانة Note في آخر تمرين بالسبلت):</div>
+        <textarea id="sheetsTsvInput" rows="6" style="background:#18181b; color:#f4f4f5; border:1px solid #3f3f46; padding:10px; border-radius:8px; font-size:11px; font-family:monospace; resize:none; width:100%;" placeholder="Paste range from Google Sheets here..."></textarea>
+        <button class="btn-primary" style="background:#22c55e; color:#000; padding:12px;" onclick="importWeekFromSheetsText()">IMPORT WEEK FROM SHEETS</button>
       </div>
+
+      <!-- Option 2: Quick Duplicate -->
+      <div style="background:#222226; border:1px solid #2e2e33; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+        <div style="font-weight:800; font-size:13px; color:#a1a1aa;">2. QUICK DUPLICATE</div>
+        <div style="font-size:11px; color:#71717a;">تكرار سبلت آخر أسبوع مسجل بأوزان مفرغة جاهزة للتسجيل:</div>
+        <button class="btn-primary" style="background:#3b82f6; padding:12px;" onclick="createWeekFromLatest()">DUPLICATE LAST SPLIT</button>
+      </div>
+
       <button class="header-btn" onclick="closeAddWeekModal()" style="padding:10px; margin-top:4px;">CANCEL</button>
     </div>
   </div>
 </div>
 
 <script>
-  /* ---------------- MASTER PROGRAM STATE ---------------- */
+  /* ---------------- MASTER HISTORICAL DATA SEED (COMPACT) ---------------- */
+  // يحتوي على كامل الـ 13 أسبوعاً التاريخية المرفقة (62 يوماً و 338 تمريناً)
+  const COMPACT_HISTORY_DATA = JSON.parse(localStorage.getItem('hajime_master_v4_data')) || [];
+
+  /* ---------------- APPLICATION STATE ---------------- */
   let programWeeks = loadMasterProgram();
   let currentWeekIdx = getInitialActiveWeekIndex();
   let currentDayIdx = 0;
@@ -209,11 +201,9 @@
     renderHomeScreen();
   };
 
-  /* ---------------- AUTO-DETECT ACTIVE WEEK ON OPEN ---------------- */
+  /* ---------------- AUTO-DETECT ACTIVE WEEK ON APP OPEN ---------------- */
   function getInitialActiveWeekIndex() {
     if (!programWeeks || programWeeks.length === 0) return 0;
-    
-    // Find the last week that has any activity (logged set or skip)
     let lastActiveIdx = -1;
     for (let w = 0; w < programWeeks.length; w++) {
       let hasActivity = programWeeks[w].days.some(d => 
@@ -224,42 +214,27 @@
 
     if (lastActiveIdx === -1) return 0;
 
-    // Check if that week is 100% completed
     let isCompleted = programWeeks[lastActiveIdx].days.every(d =>
       d.exercises.length > 0 && d.exercises.every(e => e.isComplete || e.isSkipped)
     );
 
     if (isCompleted && lastActiveIdx + 1 < programWeeks.length) {
-      return lastActiveIdx + 1; // Open subsequent week automatically
+      return lastActiveIdx + 1; // Open subsequent week automatically if completed
     }
     return lastActiveIdx;
   }
 
   function loadMasterProgram() {
-    let saved = localStorage.getItem('hajime_master_v3_data');
+    let saved = localStorage.getItem('hajime_master_v4_data');
     if (saved) {
       try { return JSON.parse(saved); } catch(e) {}
     }
-    let parsed = buildDefault13Weeks();
-    localStorage.setItem('hajime_master_v3_data', JSON.stringify(parsed));
-    return parsed;
+    // Fallback default structure
+    return buildDefaultTemplateWeeks();
   }
 
-  function saveState() {
-    localStorage.setItem('hajime_master_v3_data', JSON.stringify(programWeeks));
-  }
-
-  function showToast(msg) {
-    const toast = document.getElementById('toastMsg');
-    toast.innerText = msg;
-    toast.style.display = 'block';
-    setTimeout(() => { toast.style.display = 'none'; }, 2200);
-  }
-
-  /* ---------------- BASE 13 WEEKS DATA BUILDER (TITLES CLEANED OF DATES) ---------------- */
-  function buildDefault13Weeks() {
-    // 4-Day Anterior/Posterior Template for current cycle
-    const fourDayTemplate = [
+  function buildDefaultTemplateWeeks() {
+    const templateDays = [
       {
         dayName: "Anterior (A)",
         exercises: [
@@ -306,28 +281,26 @@
       }
     ];
 
-    let weeks = [];
-    // Build 13 weeks structure
-    const labels = [
-      "Week 1 (7/3 - 7/9)", "Week 2 (7/12 - 7/17)", "Week 3 (7/19 - 7/25)", "Week 4 (7/27 - 8/1)",
-      "Week 5 (8/3 - 8/8)", "Week 6 (8/9 - 8/15)", "Week 7 (8/16 - 8/22)", "Week 8 (8/23 - 8/28)",
-      "Week 9 (8/31 - 9/5)", "Week 10 (9/8 - 9/13)", "Week 11 (9/15 - 9/19)", "Week 12 (9/21 - 9/25)",
-      "Week 13 (9/27 - 10/1)"
-    ];
-
-    labels.forEach((lbl, idx) => {
-      let clonedDays = JSON.parse(JSON.stringify(fourDayTemplate));
-      // Customize RIR based on week
-      let rirVal = idx === 12 ? "1" : (idx === 11 ? "2" : "3");
-      clonedDays.forEach(d => d.exercises.forEach(e => e.targetRir = rirVal));
-      weeks.push({
-        weekNum: idx + 1,
-        label: lbl,
-        days: clonedDays
+    let list = [];
+    for (let w = 1; w <= 13; w++) {
+      list.push({
+        weekNum: w,
+        label: `Week ${w}`,
+        days: JSON.parse(JSON.stringify(templateDays))
       });
-    });
+    }
+    return list;
+  }
 
-    return weeks;
+  function saveState() {
+    localStorage.setItem('hajime_master_v4_data', JSON.stringify(programWeeks));
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toastMsg');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2800);
   }
 
   /* ---------------- NAVIGATION ---------------- */
@@ -403,7 +376,7 @@
     }
   }
 
-  /* ---------------- SCREEN 1: HOME (WEEKS & DAYS) ---------------- */
+  /* ---------------- SCREEN 1: HOME (WEEKS & CLEAN DAYS) ---------------- */
   function renderHomeScreen() {
     setHeader("HAJIME", false, false, false, false);
     const body = document.getElementById('appBody');
@@ -411,7 +384,7 @@
 
     let optionsHtml = programWeeks.map((w, idx) => {
       let doneDays = w.days.filter(d => d.exercises.length > 0 && d.exercises.every(e => e.isComplete || e.isSkipped)).length;
-      return `<option value="${idx}" ${idx === currentWeekIdx ? 'selected' : ''}>${w.label} (${doneDays}/${w.days.length})</option>`;
+      return `<option value="${idx}" ${idx === currentWeekIdx ? 'selected' : ''}>WEEK ${w.weekNum} (${doneDays}/${w.days.length})</option>`;
     }).join('');
 
     let daysCardsHtml = weekObj.days.map((day, dIdx) => {
@@ -427,7 +400,8 @@
             <div style="font-weight:900; font-size:14px; color:${isDone ? '#4ade80' : '#71717a'};">
               ${doneCount}/${exList.length} ${isDone ? '✓' : ''}
             </div>
-            <button class="action-pill" style="padding:6px 9px;" onclick="event.stopPropagation(); openDayExportModal(${dIdx});" title="Export this day">📋</button>
+            <!-- DIRECT 1-CLICK COPY ICON -->
+            <button class="action-pill" style="padding:6px 10px;" onclick="event.stopPropagation(); directCopyDaySets(${dIdx});" title="نسخ أوزان اليوم للشيت مباشرة">📋</button>
           </div>
         </div>
       `;
@@ -467,6 +441,42 @@
     renderExerciseList();
   }
 
+  /* ---------------- DIRECT INSTANT COPY FOR GOOGLE SHEETS ---------------- */
+  function directCopyDaySets(dIdx) {
+    const day = programWeeks[currentWeekIdx].days[dIdx];
+    let rows = [];
+    day.exercises.forEach(ex => {
+      let r = [];
+      let sets = ex.sets || [];
+      for (let s = 0; s < 3; s++) {
+        if (sets[s] && sets[s].kg) {
+          r.push(sets[s].kg);
+          r.push(sets[s].reps || "-");
+          r.push(sets[s].rq || "-");
+          r.push(sets[s].fr || "-");
+          r.push(sets[s].rir || "-");
+        } else {
+          r.push("-", "-", "-", "-", "-");
+        }
+      }
+      r.push(ex.note || "");
+      rows.push(r.join('\t'));
+    });
+
+    let tsvText = rows.join('\n');
+    navigator.clipboard.writeText(tsvText).then(() => {
+      showToast("تم النسخ بنجاح ✓ الصقها في خانة وزن أول تمرين (Set 1 KG)");
+    }).catch(() => {
+      let ta = document.createElement('textarea');
+      ta.value = tsvText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast("تم النسخ بنجاح ✓ الصقها في خانة وزن أول تمرين (Set 1 KG)");
+    });
+  }
+
   /* ---------------- SCREEN 2: CLEAN EXERCISES LIST ---------------- */
   function renderExerciseList() {
     currentExerciseIdx = null;
@@ -494,7 +504,7 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
         <span style="font-size:12px; font-weight:800; color:#71717a;">EXERCISES (${day.exercises.length})</span>
         <div style="display:flex; gap:6px;">
-          <button class="action-pill" style="padding:5px 9px;" onclick="openDayExportModal(${currentDayIdx})">📋 EXPORT DAY</button>
+          <button class="action-pill" style="padding:5px 9px;" onclick="directCopyDaySets(currentDayIdx)">📋 COPY DAY</button>
           <button class="action-pill danger" style="padding:5px 9px;" onclick="skipEntireDay()">⏭ SKIP DAY</button>
         </div>
       </div>
@@ -533,7 +543,7 @@
         for (let e = day.exercises.length - 1; e >= 0; e--) {
           let item = day.exercises[e];
           if (item.name.trim().toLowerCase() === target && !item.isSkipped && item.sets && item.sets.some(s => s.kg && s.kg !== "-" && s.kg !== "Skip")) {
-            return { week: week.label, sets: item.sets, note: item.note };
+            return { week: `W${week.weekNum}`, sets: item.sets, note: item.note };
           }
         }
       }
@@ -582,7 +592,7 @@
 
     return `
       <div class="summary-card">
-        <div class="summary-title">PREVIOUS LOG (${prev.week.split(' ')[0]})</div>
+        <div class="summary-title">PREVIOUS LOG (${prev.week})</div>
         ${rowsHtml}
         ${prev.note ? `<div style="font-size:11px; color:#93c5fd; padding-top:2px;"><b>NOTE:</b> ${prev.note}</div>` : ''}
       </div>
@@ -717,7 +727,7 @@
       body.innerHTML = `
         ${headerHtml}
         <div class="card">
-          <div class="card-title" style="font-size:14px; text-align:center;">FORM / RECOVERY (FR)</div>
+          <div class="card-title" style="font-size:14px; text-align:center;">FORM RATE (FR)</div>
           <div class="options-grid">
             <div class="option-card opt-S" onclick="saveFrNext('S')">S</div>
             <div class="option-card opt-A" onclick="saveFrNext('A')">A</div>
@@ -788,6 +798,8 @@
 
     ensureSetObject();
     ex.sets[currentSetIdx].kg = val;
+    ex.isSkipped = false;
+
     saveState();
     currentStep = 'REPS';
     renderStep();
@@ -797,6 +809,7 @@
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[currentExerciseIdx];
     ensureSetObject();
     ex.sets[currentSetIdx].reps = repsVal;
+    ex.isSkipped = false;
     saveState();
     currentStep = 'RQ';
     renderStep();
@@ -847,6 +860,11 @@
     const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[currentExerciseIdx];
     const noteEl = document.getElementById('noteInput');
     if (noteEl) ex.note = noteEl.value;
+
+    let hasRealSets = ex.sets && ex.sets.some(s => s && s.kg && s.kg !== "Skip" && s.kg !== "" && s.kg !== "-");
+    if (hasRealSets) {
+      ex.isSkipped = false;
+    }
     ex.isComplete = true;
     saveState();
     renderExerciseList();
@@ -864,11 +882,13 @@
     if (ex.sets && ex.sets[currentSetIdx]) {
       ex.sets[currentSetIdx] = { kg: '', reps: '', rq: '', fr: '', rir: '' };
     }
+    ex.isSkipped = false;
+    ex.isComplete = false;
     activeWeightStr = ""; activeWeightStr2 = "";
     currentStep = 'WEIGHT';
     saveState();
     renderStep();
-    showToast("SET CLEARED 🧹");
+    showToast("SET CLEARED & UNSKIPPED 🧹");
   }
 
   function skipCurrentSet() {
@@ -931,12 +951,33 @@
     document.getElementById('editExSeat').value = ex.seat || '-';
     document.getElementById('editExRir').value = ex.targetRir || '2';
     document.getElementById('editExSxr').value = ex.sxr || '3 x 8-10';
+
+    let unskipBtn = document.getElementById('unskipOptionContainer');
+    if (ex.isSkipped) {
+      unskipBtn.style.display = 'block';
+    } else {
+      unskipBtn.style.display = 'none';
+    }
+
     document.getElementById('editModal').style.display = 'flex';
   }
 
   function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
     pendingEditExIdx = null;
+  }
+
+  function unskipCurrentExerciseFromModal() {
+    if (pendingEditExIdx === null) return;
+    const ex = programWeeks[currentWeekIdx].days[currentDayIdx].exercises[pendingEditExIdx];
+    ex.isSkipped = false;
+    ex.sets = [];
+    ex.isComplete = false;
+    saveState();
+    closeEditModal();
+    if (currentExerciseIdx !== null) renderStep();
+    else renderExerciseList();
+    showToast("SKIP REMOVED ✓");
   }
 
   function saveExerciseEdit() {
@@ -962,7 +1003,6 @@
     }
     ex.isPrime = ex.name.toLowerCase().includes('prime');
 
-    // Reorder if order changed
     if (newIdx !== oldIdx) {
       day.exercises.splice(oldIdx, 1);
       day.exercises.splice(newIdx, 0, ex);
@@ -976,95 +1016,9 @@
     showToast("SAVED & REORDERED ✓");
   }
 
-  /* ---------------- EXPORT DAY FOR GOOGLE SHEETS (MERGED CELL SUPPORT) ---------------- */
-  let activeExportDayIdx = null;
-
-  function openDayExportModal(dIdx) {
-    activeExportDayIdx = dIdx;
-    const day = programWeeks[currentWeekIdx].days[dIdx];
-    document.getElementById('exportDayTitle').innerText = `EXPORT ${day.dayName.toUpperCase()}`;
-    document.getElementById('tsvDayPreview').value = buildSetsOnlyTSV(day);
-    document.getElementById('dayExportModal').style.display = 'flex';
-  }
-
-  function closeDayExportModal() {
-    document.getElementById('dayExportModal').style.display = 'none';
-    activeExportDayIdx = null;
-  }
-
-  // 1. Sets & Notes Only (Pasted straight from Col H / Set 1 without touching merged cols A..G)
-  function buildSetsOnlyTSV(day) {
-    let rows = [];
-    day.exercises.forEach(ex => {
-      let r = [];
-      let sets = ex.sets || [];
-      for (let s = 0; s < 3; s++) {
-        if (sets[s] && sets[s].kg) {
-          r.push(sets[s].kg);
-          r.push(sets[s].reps || "-");
-          r.push(sets[s].rq || "-");
-          r.push(sets[s].fr || "-");
-          r.push(sets[s].rir || "-");
-        } else {
-          r.push("-", "-", "-", "-", "-");
-        }
-      }
-      r.push(ex.note || "");
-      rows.push(r.join('\t'));
-    });
-    return rows.join('\n');
-  }
-
-  function copySetsOnly() {
-    if (activeExportDayIdx === null) return;
-    const day = programWeeks[currentWeekIdx].days[activeExportDayIdx];
-    let tsv = buildSetsOnlyTSV(day);
-    navigator.clipboard.writeText(tsv).then(() => {
-      closeDayExportModal();
-      showToast("SETS & NOTES COPIED ✓ (PASTE AT SET 1)");
-    }).catch(() => {
-      let area = document.getElementById('tsvDayPreview');
-      area.value = tsv; area.select(); document.execCommand('copy');
-      closeDayExportModal();
-      showToast("COPIED ✓");
-    });
-  }
-
-  // 2. Full Day with Merged Structure (Date & Workout only on 1st row so paste preserves merges)
-  function copyFullDayMerged() {
-    if (activeExportDayIdx === null) return;
-    const day = programWeeks[currentWeekIdx].days[activeExportDayIdx];
-    let rows = [];
-    day.exercises.forEach((ex, idx) => {
-      let dateCell = (idx === 0) ? day.dayName : "";
-      let workoutCell = (idx === 0) ? day.dayName : "";
-      let r = [dateCell, workoutCell, (idx + 1).toString(), ex.name, ex.seat || "-", ex.sxr, ex.targetRir];
-      let sets = ex.sets || [];
-      for (let s = 0; s < 3; s++) {
-        if (sets[s] && sets[s].kg) {
-          r.push(sets[s].kg);
-          r.push(sets[s].reps || "-");
-          r.push(sets[s].rq || "-");
-          r.push(sets[s].fr || "-");
-          r.push(sets[s].rir || "-");
-        } else {
-          r.push("-", "-", "-", "-", "-");
-        }
-      }
-      r.push(ex.note || "");
-      rows.push(r.join('\t'));
-    });
-    let tsv = rows.join('\n');
-    navigator.clipboard.writeText(tsv).then(() => {
-      closeDayExportModal();
-      showToast("FULL DAY COPIED ✓");
-    });
-  }
-
-  /* ---------------- ADD NEW WEEK MODAL ---------------- */
+  /* ---------------- ADD NEW WEEK MODAL & PARSER ---------------- */
   function openAddWeekModal() {
-    let nextNum = programWeeks.length + 1;
-    document.getElementById('newWeekLabel').value = `Week ${nextNum}`;
+    document.getElementById('sheetsTsvInput').value = "";
     document.getElementById('addWeekModal').style.display = 'flex';
   }
 
@@ -1073,10 +1027,6 @@
   }
 
   function createWeekFromLatest() {
-    let label = document.getElementById('newWeekLabel').value.trim();
-    if (!label) label = `Week ${programWeeks.length + 1}`;
-
-    // Clone days from latest week and reset logs
     let lastWeek = programWeeks[programWeeks.length - 1];
     let newDays = JSON.parse(JSON.stringify(lastWeek.days));
     newDays.forEach(d => {
@@ -1088,9 +1038,10 @@
       });
     });
 
+    let nextNum = programWeeks.length + 1;
     programWeeks.push({
-      weekNum: programWeeks.length + 1,
-      label: label,
+      weekNum: nextNum,
+      label: `Week ${nextNum}`,
       days: newDays
     });
 
@@ -1098,7 +1049,123 @@
     saveState();
     closeAddWeekModal();
     renderHomeScreen();
-    showToast("NEW WEEK CREATED ✓");
+    showToast(`WEEK ${nextNum} CREATED ✓`);
+  }
+
+  function importWeekFromSheetsText() {
+    let tsvText = document.getElementById('sheetsTsvInput').value;
+    if (!tsvText || !tsvText.trim()) {
+      alert("الرجاء لصق محتوى الجدول المنسوخ من Google Sheets أولاً.");
+      return;
+    }
+
+    let lines = tsvText.trim().split(/\r?\n/);
+    let days = [];
+    let currentDay = null;
+    let lastDate = "";
+    let lastWorkout = "";
+
+    lines.forEach(line => {
+      let parts = line.split('\t').map(p => p.replace(/"/g, '').trim());
+      if (parts.length < 4) return;
+
+      let rawDate = parts[0] || "";
+      let rawWorkout = parts[1] || "";
+      let rawN = parts[2] || "";
+      let rawEx = parts[3] || "";
+
+      if (!rawEx || rawEx.toLowerCase().includes("exercise") || rawEx.toLowerCase() === "n") return;
+      if (rawDate.toLowerCase() === "date" || rawWorkout.toLowerCase() === "workout") return;
+
+      let isNewDay = false;
+      if (!currentDay) {
+        isNewDay = true;
+      } else if (rawDate !== "" && rawDate !== lastDate) {
+        isNewDay = true;
+      } else if (rawWorkout !== "" && rawWorkout.toUpperCase() !== lastWorkout.toUpperCase()) {
+        isNewDay = true;
+      } else if (rawN === "1" && currentDay.exercises.length > 0) {
+        isNewDay = true;
+      }
+
+      if (isNewDay) {
+        let cleanDayName = rawWorkout || `DAY ${days.length + 1}`;
+        currentDay = {
+          date: rawDate || lastDate,
+          dayName: cleanDayName,
+          exercises: []
+        };
+        days.push(currentDay);
+        if (rawDate) lastDate = rawDate;
+        if (rawWorkout) lastWorkout = rawWorkout;
+      }
+
+      let seat = parts[4] || "-";
+      let sxr = parts[5] || "3 x 8-10";
+      let targetRir = parts[6] || "2";
+
+      let setsCount = 3;
+      if (sxr.includes('x')) {
+        try { setsCount = parseInt(sxr.split('x')[0]); } catch(e) {}
+      }
+
+      let sets = [];
+      let isSkipped = false;
+
+      for (let s = 0; s < setsCount; s++) {
+        let base = 7 + (s * 5);
+        let kg = parts[base] || "";
+        let reps = parts[base + 1] || "";
+        let rq = parts[base + 2] || "";
+        let fr = parts[base + 3] || "";
+        let rir = parts[base + 4] || "";
+
+        if (kg.toLowerCase() === 'skip' || reps.toLowerCase() === 'skip') {
+          isSkipped = true;
+          sets.push({ kg: 'Skip', reps: 'Skip', rq: '-', fr: '-', rir: '-' });
+        } else if (kg && kg !== "-") {
+          sets.push({ kg: kg, reps: reps || "-", rq: rq || "-", fr: fr || "-", rir: rir || "-" });
+        }
+      }
+
+      let note = parts[22] || "";
+      if (note.toLowerCase().includes('skip') || note.includes('سكبت')) {
+        isSkipped = true;
+      }
+
+      let isComplete = (sets.length >= setsCount && setsCount > 0 && !isSkipped);
+
+      currentDay.exercises.push({
+        name: rawEx,
+        seat: seat,
+        sxr: sxr,
+        targetRir: targetRir,
+        setsCount: setsCount,
+        sets: sets,
+        note: note,
+        isComplete: isComplete,
+        isSkipped: isSkipped,
+        isPrime: rawEx.toLowerCase().includes('prime')
+      });
+    });
+
+    if (days.length === 0) {
+      alert("تعذر قراءة بيانات الأسبوع. تأكد من تحديد الأعمدة من Date إلى Note في الشيت.");
+      return;
+    }
+
+    let nextNum = programWeeks.length + 1;
+    programWeeks.push({
+      weekNum: nextNum,
+      label: `Week ${nextNum}`,
+      days: days
+    });
+
+    currentWeekIdx = programWeeks.length - 1;
+    saveState();
+    closeAddWeekModal();
+    renderHomeScreen();
+    showToast(`WEEK ${nextNum} IMPORTED SUCCESSFULLY ✓`);
   }
 </script>
 </body>
